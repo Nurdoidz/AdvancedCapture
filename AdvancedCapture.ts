@@ -21,23 +21,243 @@ module.exports = {
 
 let Settings: any;
 let QuickAdd: any;
+let Variables: any;
+let Obsidian: any;
 
-function main(quickAdd: any, settings: any) {
+async function main(quickAdd: any, settings: any): Promise<void> {
 
-    QuickAdd = quickAdd;
     Settings = settings;
+    QuickAdd = quickAdd.quickAddApi;
+    Variables = quickAdd.variables;
+    Obsidian = quickAdd.app;
 
     info('!Starting');
 
+    if (!await readConfig()) {
+        error('Failed to read config file');
+        return;
+    }
+    if (!Variables.hasOwnProperty('config')) {
+        info('!Stopping');
+        return;
+    }
+    info('Read config OK');
+
     info('!Stopping');
 
+}
+
+async function readConfig(): Promise<boolean> {
+
+    info('!Reading config', { Path: Settings[CONFIG_PATH] });
+
+    const path = new Path(Settings[CONFIG_PATH]);
+    if (!path.isFile('json')) {
+        error('Invalid config path', { Path: path });
+        return false;
+    }
+
+    let file = Obsidian.vault.getAbstractFileByPath(path);
+    if (!file) {
+        warn('No config found', { Path: path });
+        info('!Creating config', { Path: path });
+        await ensureFolderExists(path);
+        file = await Obsidian.vault.create(path, '');
+        if (!file) {
+            error('Failed to create config', { Path: path });
+            return false;
+        }
+    }
+
+    let content = await Obsidian.vault.read(file);
+    let config = tryParseJSONObject(content);
+    if (!config) {
+        if (!content.trim()) {
+            if (await QuickAdd.yesNoPrompt(`No config found. Want to create a sample at '${path}'?`)) {
+                Obsidian.vault.modify(file, JSON.stringify(getSampleConfig(), null, 2));
+                info('!Created config', { Path: path });
+            }
+        }
+        else {
+            error('Could not parse config', { Path: path });
+            return false;
+        }
+    }
+
+    if (config) Variables.config = config;
+    return true;
+}
+
+function replaceVar(str: string): string {
+
+    let result = str;
+    let reMatchVar = RegExp(/var\(--(\w+?)\)/);
+    if (reMatchVar.test(result)) {
+        let match = result.match(reMatchVar)![0];
+        match = match.replace(reMatchVar, '$1');
+        if (match in Variables) result = result.replace(reMatchVar, Variables[match]);
+        else {
+            warn('Variable not found', { Variable: match, Variables: Variables })
+            result = result.replace(reMatchVar, '');
+        }
+    }
+
+    if (reMatchVar.test(result)) result = replaceVar(result);
+    return result;
+}
+
+async function ensureFolderExists(path: Path): Promise<void> {
+
+    if (!path.hasFolder()) return;
+    if (!Obsidian.vault.getAbstractFileByPath(path.getFolder)) {
+        await Obsidian.vault.createFolder(path.getFolder);
+    }
+
+}
+
+function tryParseJSONObject(jsonString: string): object | undefined {
+
+    try {
+        const obj = JSON.parse(jsonString);
+        if (obj && typeof obj === 'object') return obj;
+    }
+    catch (e) { }
+    return undefined;
+}
+
+function getSampleConfig(): object {
+
+    return {
+        'categories': {
+            'Exercise': {
+                'icon': '🏊‍♂️',
+                'fields': [
+                    {
+                        'name': 'Activity',
+                        'prompt': 'suggester',
+                        'listPath': 'Journal/Exercise Activities.md',
+                        'format': 'italics',
+                        'hasIcons': true,
+                        'write': true
+                    },
+                    {
+                        'name': 'Rating',
+                        'prompt': 'inputPrompt',
+                        'format': 'bold',
+                        'dataView': 'rating',
+                        'suffix': '/10',
+                        'write': true
+                    }
+                ]
+
+            }
+        }
+    };
+}
+
+class Path {
+
+    private folder: string;
+    private basename: string;
+    private extension: string;
+    isRootFolder: boolean;
+    private reMatchFile: RegExp = RegExp(/([^/]+)\.(\w+)$/);
+
+    constructor(path: string) {
+
+        path = replaceVar(path);
+        path = this.trimPath(path);
+        this.folder = this.extractFolder(path);
+        this.basename = this.extractBasename(path);
+        this.extension = this.extractExtension(path);
+        this.isRootFolder = !this.folder && !this.basename && !this.extension;
+    }
+
+    private trimPath(path: string): string {
+
+        return path.trim()
+            .replace(/[\n\r]/g, '')
+            .replace(/\/{2,}/g, '/')
+            .replace(/^\//, '')
+            .replace(/^\/(.+)/g, '$1');
+    }
+
+    private extractFolder(path: string): string {
+
+        if (path === '') return '';
+        if (path.includes('/')) {
+            if (path.endsWith('/')) return path.substring(0, path.length - 1);
+            if (this.reMatchFile.test(path)) return path.split('/').slice(0, -1).join('/');
+            else return path;
+        }
+        if (!this.reMatchFile.test(path)) return path;
+        else return '';
+    }
+
+    private extractBasename(path: string): string {
+
+        if (path === '') return '';
+        if (this.reMatchFile.test(path)) return path.match(this.reMatchFile)![1];
+        else return '';
+    }
+
+    private extractExtension(path: string): string {
+
+        if (path === '') return '';
+        if (this.reMatchFile.test(path)) return path.match(this.reMatchFile)![2];
+        else return '';
+    }
+
+    isFile(ext: string): boolean {
+
+        return this.extension === ext;
+    }
+
+    isFolder(): boolean {
+
+        if (this.isRootFolder) return true;
+        return this.folder !== '' && this.basename === '';
+    }
+
+    getFolder(): string {
+
+        return this.folder;
+    }
+
+    getFile(): string {
+
+        return this.basename + '.' + this.extension;
+    }
+
+    getBasename(): string {
+
+        return this.basename;
+    }
+
+    getExtension(): string {
+
+        return this.extension;
+    }
+
+    hasFolder(): boolean {
+
+        return this.folder !== '';
+    }
+
+    toString(): string {
+
+        if (this.isRootFolder) return '';
+        if (this.folder) return `${this.folder}/${this.basename}.${this.extension}`;
+        else return `${this.basename}.${this.extension}`;
+    }
 }
 
 function info(message: string, obj?: object) {
 
     if (message.startsWith('!')) {
         message = message.substring(1);
-    } else if (!Settings.Debug) return;
+    }
+    else if (!Settings.Debug) return;
 
     if (!obj) {
         console.log(debug.prefix + message, ...debug.prefixColors);
