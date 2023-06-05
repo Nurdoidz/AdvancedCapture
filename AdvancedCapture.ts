@@ -17,7 +17,7 @@ module.exports = {
             }
         }
     }
-}
+};
 
 let Settings: any;
 let QuickAdd: any;
@@ -37,14 +37,13 @@ async function main(quickAdd: any, settings: any): Promise<void> {
         error('Failed to read config file');
         return;
     }
-    if (!Variables.hasOwnProperty('config')) {
+    if (!('config' in Variables)) {
         info('!Stopping');
         return;
     }
     info('Read config OK');
 
     info('!Stopping');
-
 }
 
 async function readConfig(): Promise<boolean> {
@@ -69,20 +68,19 @@ async function readConfig(): Promise<boolean> {
         }
     }
 
-    let content = await Obsidian.vault.read(file);
-    let config = tryParseJSONObject(content);
-    if (!config) {
-        if (!content.trim()) {
-            if (await QuickAdd.yesNoPrompt(`No config found. Want to create a sample at '${path}'?`)) {
-                Obsidian.vault.modify(file, JSON.stringify(getSampleConfig(), null, 2));
-                info('!Created config', { Path: path });
-            }
-        }
-        else {
-            error('Could not parse config', { Path: path });
-            return false;
+    const content = await Obsidian.vault.read(file);
+    const config = tryParseJSONObject(content);
+    if (!config) if (!content.trim()) {
+        if (await QuickAdd.yesNoPrompt(`No config found. Want to create a sample at '${path}'?`)) {
+            Obsidian.vault.modify(file, JSON.stringify(getSampleConfig(), null, 2));
+            info('!Created config', { Path: path });
         }
     }
+    else {
+        error('Could not parse config', { Path: path });
+        return false;
+    }
+
 
     if (config) Variables.config = config;
     return true;
@@ -91,13 +89,13 @@ async function readConfig(): Promise<boolean> {
 function replaceVar(str: string): string {
 
     let result = str;
-    let reMatchVar = RegExp(/var\(--(\w+?)\)/);
+    const reMatchVar = RegExp(/var\(--(\w+?)\)/);
     if (reMatchVar.test(result)) {
         let match = result.match(reMatchVar)![0];
         match = match.replace(reMatchVar, '$1');
         if (match in Variables) result = result.replace(reMatchVar, Variables[match]);
         else {
-            warn('Variable not found', { Variable: match, Variables: Variables })
+            warn('Variable not found', { Variable: match, Variables: Variables });
             result = result.replace(reMatchVar, '');
         }
     }
@@ -109,10 +107,7 @@ function replaceVar(str: string): string {
 async function ensureFolderExists(path: Path): Promise<void> {
 
     if (!path.hasFolder()) return;
-    if (!Obsidian.vault.getAbstractFileByPath(path.getFolder)) {
-        await Obsidian.vault.createFolder(path.getFolder);
-    }
-
+    if (!Obsidian.vault.getAbstractFileByPath(path.getFolder)) await Obsidian.vault.createFolder(path.getFolder);
 }
 
 function tryParseJSONObject(jsonString: string): object | undefined {
@@ -121,7 +116,9 @@ function tryParseJSONObject(jsonString: string): object | undefined {
         const obj = JSON.parse(jsonString);
         if (obj && typeof obj === 'object') return obj;
     }
-    catch (e) { }
+    catch (e) {
+        return undefined;
+    }
     return undefined;
 }
 
@@ -161,7 +158,7 @@ class Path {
     private basename: string;
     private extension: string;
     isRootFolder: boolean;
-    private reMatchFile: RegExp = RegExp(/([^/]+)\.(\w+)$/);
+    private reMatchFile = RegExp(/([^/]+)\.(\w+)$/);
 
     constructor(path: string) {
 
@@ -188,24 +185,24 @@ class Path {
         if (path.includes('/')) {
             if (path.endsWith('/')) return path.substring(0, path.length - 1);
             if (this.reMatchFile.test(path)) return path.split('/').slice(0, -1).join('/');
-            else return path;
+            return path;
         }
         if (!this.reMatchFile.test(path)) return path;
-        else return '';
+        return '';
     }
 
     private extractBasename(path: string): string {
 
         if (path === '') return '';
         if (this.reMatchFile.test(path)) return path.match(this.reMatchFile)![1];
-        else return '';
+        return '';
     }
 
     private extractExtension(path: string): string {
 
         if (path === '') return '';
         if (this.reMatchFile.test(path)) return path.match(this.reMatchFile)![2];
-        else return '';
+        return '';
     }
 
     isFile(ext: string): boolean {
@@ -226,7 +223,7 @@ class Path {
 
     getFile(): string {
 
-        return this.basename + '.' + this.extension;
+        return `${this.basename}.${this.extension}`;
     }
 
     getBasename(): string {
@@ -248,15 +245,14 @@ class Path {
 
         if (this.isRootFolder) return '';
         if (this.folder) return `${this.folder}/${this.basename}.${this.extension}`;
-        else return `${this.basename}.${this.extension}`;
+        return `${this.basename}.${this.extension}`;
     }
 }
 
 function info(message: string, obj?: object) {
 
-    if (message.startsWith('!')) {
-        message = message.substring(1);
-    }
+    if (message.startsWith('!')) message = message.substring(1);
+
     else if (!Settings.Debug) return;
 
     if (!obj) {
@@ -294,7 +290,7 @@ function debugObj(obj: object) {
 
     Object.keys(obj).forEach((key, i) => {
         console.info(debug.object(key), ...debug.objectColors, Object.values(obj)[i]);
-    })
+    });
 }
 
 const colors = {
@@ -303,16 +299,16 @@ const colors = {
     pink: 'color: #D927F1',
     red: 'color: #F12727',
     orange: 'color: #F18C27'
-}
+};
 
 const debug = {
     prefix: '%c[AdvancedCapture]%c ',
-    object: (str: string) => '%c' + str + ':%c ',
+    object: (str: string) => `%c${str}:%c `,
     prefixColors: [colors.blue, colors.reset],
     objectColors: [colors.pink, colors.reset],
     singleKey: (obj: object) => {
         const [key, value] = Object.entries(obj)[0];
-        return '%c' + key + ':%c ' + value;
+        return `%c${key}:%c ${value}`;
     },
     singleKeyColors: [colors.pink, colors.reset]
-}
+};

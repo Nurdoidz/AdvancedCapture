@@ -32,7 +32,7 @@ async function main(quickAdd, settings) {
         error('Failed to read config file');
         return;
     }
-    if (!Variables.hasOwnProperty('config')) {
+    if (!('config' in Variables)) {
         info('!Stopping');
         return;
     }
@@ -57,9 +57,9 @@ async function readConfig() {
             return false;
         }
     }
-    let content = await Obsidian.vault.read(file);
-    let config = tryParseJSONObject(content);
-    if (!config) {
+    const content = await Obsidian.vault.read(file);
+    const config = tryParseJSONObject(content);
+    if (!config)
         if (!content.trim()) {
             if (await QuickAdd.yesNoPrompt(`No config found. Want to create a sample at '${path}'?`)) {
                 Obsidian.vault.modify(file, JSON.stringify(getSampleConfig(), null, 2));
@@ -70,14 +70,13 @@ async function readConfig() {
             error('Could not parse config', { Path: path });
             return false;
         }
-    }
     if (config)
         Variables.config = config;
     return true;
 }
 function replaceVar(str) {
     let result = str;
-    let reMatchVar = RegExp(/var\(--(\w+?)\)/);
+    const reMatchVar = RegExp(/var\(--(\w+?)\)/);
     if (reMatchVar.test(result)) {
         let match = result.match(reMatchVar)[0];
         match = match.replace(reMatchVar, '$1');
@@ -95,9 +94,8 @@ function replaceVar(str) {
 async function ensureFolderExists(path) {
     if (!path.hasFolder())
         return;
-    if (!Obsidian.vault.getAbstractFileByPath(path.getFolder)) {
+    if (!Obsidian.vault.getAbstractFileByPath(path.getFolder))
         await Obsidian.vault.createFolder(path.getFolder);
-    }
 }
 function tryParseJSONObject(jsonString) {
     try {
@@ -105,7 +103,9 @@ function tryParseJSONObject(jsonString) {
         if (obj && typeof obj === 'object')
             return obj;
     }
-    catch (e) { }
+    catch (e) {
+        return undefined;
+    }
     return undefined;
 }
 function getSampleConfig() {
@@ -160,29 +160,25 @@ class Path {
                 return path.substring(0, path.length - 1);
             if (this.reMatchFile.test(path))
                 return path.split('/').slice(0, -1).join('/');
-            else
-                return path;
+            return path;
         }
         if (!this.reMatchFile.test(path))
             return path;
-        else
-            return '';
+        return '';
     }
     extractBasename(path) {
         if (path === '')
             return '';
         if (this.reMatchFile.test(path))
             return path.match(this.reMatchFile)[1];
-        else
-            return '';
+        return '';
     }
     extractExtension(path) {
         if (path === '')
             return '';
         if (this.reMatchFile.test(path))
             return path.match(this.reMatchFile)[2];
-        else
-            return '';
+        return '';
     }
     isFile(ext) {
         return this.extension === ext;
@@ -196,7 +192,7 @@ class Path {
         return this.folder;
     }
     getFile() {
-        return this.basename + '.' + this.extension;
+        return `${this.basename}.${this.extension}`;
     }
     getBasename() {
         return this.basename;
@@ -212,14 +208,12 @@ class Path {
             return '';
         if (this.folder)
             return `${this.folder}/${this.basename}.${this.extension}`;
-        else
-            return `${this.basename}.${this.extension}`;
+        return `${this.basename}.${this.extension}`;
     }
 }
 function info(message, obj) {
-    if (message.startsWith('!')) {
+    if (message.startsWith('!'))
         message = message.substring(1);
-    }
     else if (!Settings.Debug)
         return;
     if (!obj) {
@@ -262,12 +256,12 @@ const colors = {
 };
 const debug = {
     prefix: '%c[AdvancedCapture]%c ',
-    object: (str) => '%c' + str + ':%c ',
+    object: (str) => `%c${str}:%c `,
     prefixColors: [colors.blue, colors.reset],
     objectColors: [colors.pink, colors.reset],
     singleKey: (obj) => {
         const [key, value] = Object.entries(obj)[0];
-        return '%c' + key + ':%c ' + value;
+        return `%c${key}:%c ${value}`;
     },
     singleKeyColors: [colors.pink, colors.reset]
 };

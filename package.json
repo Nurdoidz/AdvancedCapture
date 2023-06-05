@@ -1,0 +1,26 @@
+{
+  "name": "AdvancedCapture",
+  "version": "1.0.0",
+  "description": "A script addon for the QuickAdd Obsidian plugin that allows advanced capture configurations",
+  "main": "AdvancedCapture.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nurdoidz/AdvancedCapture.git"
+  },
+  "keywords": [],
+  "author": "Nurdoidz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Nurdoidz/AdvancedCapture/issues"
+  },
+  "homepage": "https://github.com/Nurdoidz/AdvancedCapture#readme",
+  "devDependencies": {
+    "@types/node": "^20.2.5",
+    "@typescript-eslint/eslint-plugin": "^5.59.8",
+    "@typescript-eslint/parser": "^5.59.8",
+    "eslint": "^8.42.0"
+  }
+}
