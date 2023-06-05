@@ -21,16 +21,35 @@ module.exports = {
 
 let Settings: any;
 let QuickAdd: any;
-let Variables: any;
 let Obsidian: any;
+const Variables: StringReplaceable = {
+    replaceInString: function(str: string): string {
+
+        let result = str;
+        const reMatchVar = RegExp(/var\(--(\w+?)\)/);
+        if (reMatchVar.test(result)) {
+            const match = result.match(reMatchVar)![0]
+                .replace(reMatchVar, '$1');
+            if (match in this) result = result.replace(reMatchVar, this[match]);
+            else result = result.replace(reMatchVar, '');
+
+            if (reMatchVar.test(result)) result = this.replaceInString(result);
+        }
+        return result;
+    }
+};
+interface StringReplaceable {
+    replaceInString(str: string): string
+    [key: string]: any
+}
+export { Variables };
 
 async function main(quickAdd: any, settings: any): Promise<void> {
 
     Settings = settings;
     QuickAdd = quickAdd.quickAddApi;
-    Variables = quickAdd.variables;
     Obsidian = quickAdd.app;
-
+    Object.assign(Variables, quickAdd.variables);
     info('!Starting');
 
     if (!await readConfig()) {
@@ -50,7 +69,7 @@ async function readConfig(): Promise<boolean> {
 
     info('!Reading config', { Path: Settings[CONFIG_PATH] });
 
-    const path = new Path(Settings[CONFIG_PATH]);
+    const path = new Path(Variables.replaceInString(Settings[CONFIG_PATH]));
     if (!path.isFile('json')) {
         error('Invalid config path', { Path: path });
         return false;
@@ -86,24 +105,6 @@ async function readConfig(): Promise<boolean> {
     return true;
 }
 
-function replaceVar(str: string): string {
-
-    let result = str;
-    const reMatchVar = RegExp(/var\(--(\w+?)\)/);
-    if (reMatchVar.test(result)) {
-        let match = result.match(reMatchVar)![0];
-        match = match.replace(reMatchVar, '$1');
-        if (match in Variables) result = result.replace(reMatchVar, Variables[match]);
-        else {
-            warn('Variable not found', { Variable: match, Variables: Variables });
-            result = result.replace(reMatchVar, '');
-        }
-    }
-
-    if (reMatchVar.test(result)) result = replaceVar(result);
-    return result;
-}
-
 async function ensureFolderExists(path: Path): Promise<void> {
 
     if (!path.hasFolder()) return;
@@ -119,7 +120,6 @@ function tryParseJSONObject(jsonString: string): object | undefined {
     catch (e) {
         return undefined;
     }
-    return undefined;
 }
 
 function getSampleConfig(): object {
@@ -162,7 +162,6 @@ class Path {
 
     constructor(path: string) {
 
-        path = replaceVar(path);
         path = this.trimPath(path);
         this.folder = this.extractFolder(path);
         this.basename = this.extractBasename(path);
@@ -252,7 +251,6 @@ class Path {
 function info(message: string, obj?: object) {
 
     if (message.startsWith('!')) message = message.substring(1);
-
     else if (!Settings.Debug) return;
 
     if (!obj) {

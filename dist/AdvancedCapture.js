@@ -1,4 +1,6 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Variables = void 0;
 const CONFIG_PATH = 'Path to configuration file';
 module.exports = {
     entry: main,
@@ -20,13 +22,30 @@ module.exports = {
 };
 let Settings;
 let QuickAdd;
-let Variables;
 let Obsidian;
+const Variables = {
+    replaceInString: function (str) {
+        let result = str;
+        const reMatchVar = RegExp(/var\(--(\w+?)\)/);
+        if (reMatchVar.test(result)) {
+            const match = result.match(reMatchVar)[0]
+                .replace(reMatchVar, '$1');
+            if (match in this)
+                result = result.replace(reMatchVar, this[match]);
+            else
+                result = result.replace(reMatchVar, '');
+            if (reMatchVar.test(result))
+                result = this.replaceInString(result);
+        }
+        return result;
+    }
+};
+exports.Variables = Variables;
 async function main(quickAdd, settings) {
     Settings = settings;
     QuickAdd = quickAdd.quickAddApi;
-    Variables = quickAdd.variables;
     Obsidian = quickAdd.app;
+    Object.assign(Variables, quickAdd.variables);
     info('!Starting');
     if (!await readConfig()) {
         error('Failed to read config file');
@@ -41,7 +60,7 @@ async function main(quickAdd, settings) {
 }
 async function readConfig() {
     info('!Reading config', { Path: Settings[CONFIG_PATH] });
-    const path = new Path(Settings[CONFIG_PATH]);
+    const path = new Path(Variables.replaceInString(Settings[CONFIG_PATH]));
     if (!path.isFile('json')) {
         error('Invalid config path', { Path: path });
         return false;
@@ -74,23 +93,6 @@ async function readConfig() {
         Variables.config = config;
     return true;
 }
-function replaceVar(str) {
-    let result = str;
-    const reMatchVar = RegExp(/var\(--(\w+?)\)/);
-    if (reMatchVar.test(result)) {
-        let match = result.match(reMatchVar)[0];
-        match = match.replace(reMatchVar, '$1');
-        if (match in Variables)
-            result = result.replace(reMatchVar, Variables[match]);
-        else {
-            warn('Variable not found', { Variable: match, Variables: Variables });
-            result = result.replace(reMatchVar, '');
-        }
-    }
-    if (reMatchVar.test(result))
-        result = replaceVar(result);
-    return result;
-}
 async function ensureFolderExists(path) {
     if (!path.hasFolder())
         return;
@@ -106,7 +108,6 @@ function tryParseJSONObject(jsonString) {
     catch (e) {
         return undefined;
     }
-    return undefined;
 }
 function getSampleConfig() {
     return {
@@ -138,7 +139,6 @@ function getSampleConfig() {
 class Path {
     constructor(path) {
         this.reMatchFile = RegExp(/([^/]+)\.(\w+)$/);
-        path = replaceVar(path);
         path = this.trimPath(path);
         this.folder = this.extractFolder(path);
         this.basename = this.extractBasename(path);
