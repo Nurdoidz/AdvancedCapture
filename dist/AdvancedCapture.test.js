@@ -330,3 +330,8 @@ const vitest_1 = require("vitest");
         });
     });
 });
+(0, vitest_1.describe)('Sample config', () => {
+    (0, vitest_1.it)('should return an object', () => {
+        (0, vitest_1.expect)((0, AdvancedCapture_1.getSampleConfig)()).toBeTypeOf('object');
+    });
+});

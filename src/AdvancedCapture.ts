@@ -122,7 +122,7 @@ function tryParseJSONObject(jsonString: string): object | undefined {
     }
 }
 
-function getSampleConfig(): object {
+export function getSampleConfig(): object {
 
     return {
         'categories': {

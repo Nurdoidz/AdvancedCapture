@@ -1,4 +1,4 @@
-import { Path } from './AdvancedCapture';
+import { Path, getSampleConfig } from './AdvancedCapture';
 import { describe, expect, it, test } from 'vitest';
 
 describe('Path', () => {
@@ -327,5 +327,11 @@ describe('Path', () => {
             const path = new Path('a/.bc');
             expect(path.toString()).toStrictEqual('a/.bc');
         });
+    });
+});
+
+describe('Sample config', () => {
+    it('should return an object', () => {
+        expect(getSampleConfig()).toBeTypeOf('object');
     });
 });

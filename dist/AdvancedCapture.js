@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Path = exports.Variables = void 0;
+exports.Path = exports.getSampleConfig = exports.Variables = void 0;
 const CONFIG_PATH = 'Path to configuration file';
 module.exports = {
     entry: main,
@@ -136,6 +136,7 @@ function getSampleConfig() {
         }
     };
 }
+exports.getSampleConfig = getSampleConfig;
 class Path {
     constructor(path) {
         this.reMatchFile = RegExp(/([^/]+)\.(\w+)$/);
