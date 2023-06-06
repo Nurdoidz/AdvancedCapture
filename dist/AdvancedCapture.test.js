@@ -335,3 +335,31 @@ const vitest_1 = require("vitest");
         (0, vitest_1.expect)((0, AdvancedCapture_1.getSampleConfig)()).toBeTypeOf('object');
     });
 });
+(0, vitest_1.describe)('Variables.replaceInString()', () => {
+    (0, vitest_1.it)('should return "" given ""', () => {
+        (0, vitest_1.expect)(AdvancedCapture_1.Variables.replaceInString('')).toStrictEqual('');
+    });
+    (0, vitest_1.it)('should return "abc" given "abc" as string', () => {
+        (0, vitest_1.expect)(AdvancedCapture_1.Variables.replaceInString('abc')).toStrictEqual('abc');
+    });
+    (0, vitest_1.it)('should return "bar" given "var(--foo)" as string, with { foo: "bar" }', () => {
+        Object.assign(AdvancedCapture_1.Variables, { foo: 'bar' });
+        (0, vitest_1.expect)(AdvancedCapture_1.Variables.replaceInString('var(--foo)')).toStrictEqual('bar');
+    });
+    (0, vitest_1.it)('should return "barbar" given "var(--foo)var(--foo)" as string, with { foo: "bar" }', () => {
+        Object.assign(AdvancedCapture_1.Variables, { foo: 'bar' });
+        (0, vitest_1.expect)(AdvancedCapture_1.Variables.replaceInString('var(--foo)var(--foo)')).toStrictEqual('barbar');
+    });
+    (0, vitest_1.it)('should return "bar bar" given "var(--foo) var(--foo)" as string, with { foo: "bar" }', () => {
+        Object.assign(AdvancedCapture_1.Variables, { foo: 'bar' });
+        (0, vitest_1.expect)(AdvancedCapture_1.Variables.replaceInString('var(--foo) var(--foo)')).toStrictEqual('bar bar');
+    });
+    (0, vitest_1.it)('should return "bar" given "var(--foo)" as string, with { foo: "var(--bar), bar: "bar" }', () => {
+        Object.assign(AdvancedCapture_1.Variables, { foo: 'var(--bar)' });
+        Object.assign(AdvancedCapture_1.Variables, { bar: 'bar' });
+        (0, vitest_1.expect)(AdvancedCapture_1.Variables.replaceInString('var(--foo)')).toStrictEqual('bar');
+    });
+    (0, vitest_1.it)('should return "Pikachu likes ." given "Pikachu likes var(--pref).", with no "pref" variable', () => {
+        (0, vitest_1.expect)(AdvancedCapture_1.Variables.replaceInString('Pikachu likes var(--pref).')).toStrictEqual('Pikachu likes .');
+    });
+});

@@ -1,4 +1,4 @@
-import { Path, getSampleConfig } from './AdvancedCapture';
+import { Path, getSampleConfig, Variables } from './AdvancedCapture';
 import { describe, expect, it, test } from 'vitest';
 
 describe('Path', () => {
@@ -333,5 +333,34 @@ describe('Path', () => {
 describe('Sample config', () => {
     it('should return an object', () => {
         expect(getSampleConfig()).toBeTypeOf('object');
+    });
+});
+
+describe('Variables.replaceInString()', () => {
+    it('should return "" given ""', () => {
+        expect(Variables.replaceInString('')).toStrictEqual('');
+    });
+    it('should return "abc" given "abc" as string', () => {
+        expect(Variables.replaceInString('abc')).toStrictEqual('abc');
+    });
+    it('should return "bar" given "var(--foo)" as string, with { foo: "bar" }', () => {
+        Object.assign(Variables, { foo: 'bar' });
+        expect(Variables.replaceInString('var(--foo)')).toStrictEqual('bar');
+    });
+    it('should return "barbar" given "var(--foo)var(--foo)" as string, with { foo: "bar" }', () => {
+        Object.assign(Variables, { foo: 'bar' });
+        expect(Variables.replaceInString('var(--foo)var(--foo)')).toStrictEqual('barbar');
+    });
+    it('should return "bar bar" given "var(--foo) var(--foo)" as string, with { foo: "bar" }', () => {
+        Object.assign(Variables, { foo: 'bar' });
+        expect(Variables.replaceInString('var(--foo) var(--foo)')).toStrictEqual('bar bar');
+    });
+    it('should return "bar" given "var(--foo)" as string, with { foo: "var(--bar), bar: "bar" }', () => {
+        Object.assign(Variables, { foo: 'var(--bar)' });
+        Object.assign(Variables, { bar: 'bar' });
+        expect(Variables.replaceInString('var(--foo)')).toStrictEqual('bar');
+    });
+    it('should return "Pikachu likes ." given "Pikachu likes var(--pref).", with no "pref" variable', () => {
+        expect(Variables.replaceInString('Pikachu likes var(--pref).')).toStrictEqual('Pikachu likes .');
     });
 });
