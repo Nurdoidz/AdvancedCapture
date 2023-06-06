@@ -4,7 +4,7 @@
   "description": "A script addon for the QuickAdd Obsidian plugin that allows advanced capture configurations",
   "main": "src/AdvancedCapture.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && eslint --fix src/**/*.ts",
     "test": "vitest --coverage"
   },
   "repository": {
