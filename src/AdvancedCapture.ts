@@ -152,7 +152,7 @@ function getSampleConfig(): object {
     };
 }
 
-class Path {
+export class Path {
 
     private folder: string;
     private basename: string;
@@ -206,7 +206,7 @@ class Path {
 
     isFile(ext: string): boolean {
 
-        return this.extension === ext;
+        return this.extension === ext.trim();
     }
 
     isFolder(): boolean {
@@ -222,7 +222,8 @@ class Path {
 
     getFile(): string {
 
-        return `${this.basename}.${this.extension}`;
+        if (this.hasFile()) return `${this.basename}.${this.extension}`;
+        return '';
     }
 
     getBasename(): string {
@@ -240,11 +241,14 @@ class Path {
         return this.folder !== '';
     }
 
+    hasFile(): boolean {
+
+        return this.basename !== '' && this.extension !== '';
+    }
+
     toString(): string {
 
-        if (this.isRootFolder) return '';
-        if (this.folder) return `${this.folder}/${this.basename}.${this.extension}`;
-        return `${this.basename}.${this.extension}`;
+        return `${this.folder}${this.hasFolder() && this.hasFile() ? '/' : ''}${this.getFile()}`;
     }
 }
 

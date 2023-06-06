@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Variables = void 0;
+exports.Path = exports.Variables = void 0;
 const CONFIG_PATH = 'Path to configuration file';
 module.exports = {
     entry: main,
@@ -181,7 +181,7 @@ class Path {
         return '';
     }
     isFile(ext) {
-        return this.extension === ext;
+        return this.extension === ext.trim();
     }
     isFolder() {
         if (this.isRootFolder)
@@ -192,7 +192,9 @@ class Path {
         return this.folder;
     }
     getFile() {
-        return `${this.basename}.${this.extension}`;
+        if (this.hasFile())
+            return `${this.basename}.${this.extension}`;
+        return '';
     }
     getBasename() {
         return this.basename;
@@ -203,14 +205,14 @@ class Path {
     hasFolder() {
         return this.folder !== '';
     }
+    hasFile() {
+        return this.basename !== '' && this.extension !== '';
+    }
     toString() {
-        if (this.isRootFolder)
-            return '';
-        if (this.folder)
-            return `${this.folder}/${this.basename}.${this.extension}`;
-        return `${this.basename}.${this.extension}`;
+        return `${this.folder}${this.hasFolder() && this.hasFile() ? '/' : ''}${this.getFile()}`;
     }
 }
+exports.Path = Path;
 function info(message, obj) {
     if (message.startsWith('!'))
         message = message.substring(1);
