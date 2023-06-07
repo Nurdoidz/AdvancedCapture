@@ -1,3 +1,11 @@
+/*
+ * AdvancedCapture for QuickAdd by Nurdoidz
+ *
+ * Version UNRELEASED
+ * https://github.com/Nurdoidz/AdvancedCapture
+ *
+ * ------------------------------------------------------------------------- */
+
 const CONFIG_PATH = 'Path to configuration file';
 const DATE_FORMAT = 'Date format';
 const TIME_FORMAT = 'Time format';
