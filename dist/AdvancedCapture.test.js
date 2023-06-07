@@ -374,26 +374,32 @@ const vitest_1 = require("vitest");
     (0, vitest_1.it)('should return "x" with no styles', () => {
         const style = new AdvancedCapture_1.Style();
         (0, vitest_1.expect)(style.apply('x')).toStrictEqual('x');
+        (0, vitest_1.expect)(AdvancedCapture_1.Style.applyStyle('x', style)).toStrictEqual('x');
     });
     (0, vitest_1.it)('should return "**x**" with only bold', () => {
         const style = new AdvancedCapture_1.Style().withBold();
         (0, vitest_1.expect)(style.apply('x')).toStrictEqual('**x**');
+        (0, vitest_1.expect)(AdvancedCapture_1.Style.applyStyle('x', style)).toStrictEqual('**x**');
     });
     (0, vitest_1.it)('should return "_x_" with only italics', () => {
         const style = new AdvancedCapture_1.Style().withItalics();
         (0, vitest_1.expect)(style.apply('x')).toStrictEqual('_x_');
+        (0, vitest_1.expect)(AdvancedCapture_1.Style.applyStyle('x', style)).toStrictEqual('_x_');
     });
     (0, vitest_1.it)('should return "~~x~~" with only strikethrough', () => {
         const style = new AdvancedCapture_1.Style().withStrikethrough();
         (0, vitest_1.expect)(style.apply('x')).toStrictEqual('~~x~~');
+        (0, vitest_1.expect)(AdvancedCapture_1.Style.applyStyle('x', style)).toStrictEqual('~~x~~');
     });
     (0, vitest_1.it)('should return "==x==" with only highlight', () => {
         const style = new AdvancedCapture_1.Style().withHighlight();
         (0, vitest_1.expect)(style.apply('x')).toStrictEqual('==x==');
+        (0, vitest_1.expect)(AdvancedCapture_1.Style.applyStyle('x', style)).toStrictEqual('==x==');
     });
     (0, vitest_1.it)('should return "`x`" with only code', () => {
         const style = new AdvancedCapture_1.Style().withCode();
         (0, vitest_1.expect)(style.apply('x')).toStrictEqual('`x`');
+        (0, vitest_1.expect)(AdvancedCapture_1.Style.applyStyle('x', style)).toStrictEqual('`x`');
     });
     (0, vitest_1.it)('should have bold as true given object with bold=true property', () => {
         const style = new AdvancedCapture_1.Style({ bold: true });
@@ -478,8 +484,36 @@ const vitest_1 = require("vitest");
         const styleCounts = getStyleCounts(styles);
         const regexCounts = getRegexCounts(patterns, getTextPerms(styles));
         for (const style of Object.keys(styles))
-            (0, vitest_1.test)(`${styles[style]} regex count should match apply count`, () => {
+            (0, vitest_1.test)(`${style} regex count should match apply count`, () => {
                 (0, vitest_1.expect)(regexCounts[style]).toEqual(styleCounts[style]);
             });
+    });
+});
+(0, vitest_1.describe)('replaceStringWithBoolean', () => {
+    (0, vitest_1.it)('should return true given "true"', () => {
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)('true')).toStrictEqual(true);
+    });
+    (0, vitest_1.it)('should return false given "false"', () => {
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)('false')).toStrictEqual(false);
+    });
+    (0, vitest_1.it)('should return same string given variations of "true"', () => {
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)(' true')).toStrictEqual(' true');
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)(' true ')).toStrictEqual(' true ');
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)('true ')).toStrictEqual('true ');
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)('TRUE')).toStrictEqual('TRUE');
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)('True')).toStrictEqual('True');
+    });
+    (0, vitest_1.it)('should return same string given variations of "false"', () => {
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)(' false')).toStrictEqual(' false');
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)(' false ')).toStrictEqual(' false ');
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)('false ')).toStrictEqual('false ');
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)('FALSE')).toStrictEqual('FALSE');
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)('False')).toStrictEqual('False');
+    });
+    (0, vitest_1.it)('should return "" given ""', () => {
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)('')).toStrictEqual('');
+    });
+    (0, vitest_1.it)('should return " " given " "', () => {
+        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)(' ')).toStrictEqual(' ');
     });
 });

@@ -389,7 +389,7 @@ export class Style {
     }
 }
 
-function replaceStringWithBoolean(str: string): string | boolean {
+export function replaceStringWithBoolean(str: string): string | boolean {
 
     if (str === 'false') return false;
     if (str === 'true') return true;

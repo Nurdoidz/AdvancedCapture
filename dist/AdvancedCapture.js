@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Path = exports.Style = exports.getSampleConfig = exports.Variables = void 0;
+exports.Path = exports.replaceStringWithBoolean = exports.Style = exports.getSampleConfig = exports.Variables = void 0;
 const CONFIG_PATH = 'Path to configuration file';
 const DATE_FORMAT = 'Date format';
 const TIME_FORMAT = 'Time format';
@@ -321,6 +321,7 @@ function replaceStringWithBoolean(str) {
         return true;
     return str;
 }
+exports.replaceStringWithBoolean = replaceStringWithBoolean;
 function applyRecursive(obj, func) {
     if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean')
         return func(obj);

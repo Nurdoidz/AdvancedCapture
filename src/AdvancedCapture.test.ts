@@ -1,4 +1,4 @@
-import { Path, getSampleConfig, Variables, Style } from './AdvancedCapture';
+import { Path, getSampleConfig, Variables, Style, replaceStringWithBoolean } from './AdvancedCapture';
 import { describe, expect, it, test } from 'vitest';
 
 describe('Path', () => {
@@ -499,5 +499,34 @@ describe('Style class', () => {
         for (const style of Object.keys(styles)) test(`${style} regex count should match apply count`, () => {
             expect(regexCounts[style]).toEqual(styleCounts[style]);
         });
+    });
+});
+
+describe('replaceStringWithBoolean()', () => {
+    it('should return true given "true"', () => {
+        expect(replaceStringWithBoolean('true')).toStrictEqual(true);
+    });
+    it('should return false given "false"', () => {
+        expect(replaceStringWithBoolean('false')).toStrictEqual(false);
+    });
+    it('should return same string given variations of "true"', () => {
+        expect(replaceStringWithBoolean(' true')).toStrictEqual(' true');
+        expect(replaceStringWithBoolean(' true ')).toStrictEqual(' true ');
+        expect(replaceStringWithBoolean('true ')).toStrictEqual('true ');
+        expect(replaceStringWithBoolean('TRUE')).toStrictEqual('TRUE');
+        expect(replaceStringWithBoolean('True')).toStrictEqual('True');
+    });
+    it('should return same string given variations of "false"', () => {
+        expect(replaceStringWithBoolean(' false')).toStrictEqual(' false');
+        expect(replaceStringWithBoolean(' false ')).toStrictEqual(' false ');
+        expect(replaceStringWithBoolean('false ')).toStrictEqual('false ');
+        expect(replaceStringWithBoolean('FALSE')).toStrictEqual('FALSE');
+        expect(replaceStringWithBoolean('False')).toStrictEqual('False');
+    });
+    it('should return "" given ""', () => {
+        expect(replaceStringWithBoolean('')).toStrictEqual('');
+    });
+    it('should return " " given " "', () => {
+        expect(replaceStringWithBoolean(' ')).toStrictEqual(' ');
     });
 });
