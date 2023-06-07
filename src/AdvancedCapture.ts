@@ -226,7 +226,7 @@ class Field implements Printable, Exportable {
         result = `${this.config.print.prefix}${result}${this.config.print.suffix}`;
         if (this.config.print.internalLink) result = `[[${result}]]`;
         else if (this.config.print.externalLink) result = `[${result}](${this.config.print.externalLink})`;
-        return applyStyle(result, new Style(this.config.print.style));
+        return Style.applyStyle(result, new Style(this.config.print.style));
     }
 
     getFieldKey(): string {
@@ -329,12 +329,13 @@ interface Exportable {
     getFieldValue(): string;
 }
 
-class Style {
+export class Style {
 
     bold = false;
     italics = false;
     strikethrough = false;
     highlight = false;
+    code = false;
 
     constructor(obj?: object) {
 
@@ -364,16 +365,28 @@ class Style {
         this.highlight = true;
         return this;
     }
-}
 
-function applyStyle(str: string, style: Style) {
+    withCode(): Style {
 
-    let result = str;
-    if (style.bold) result = `**${result}**`;
-    if (style.italics) result = `_${result}_`;
-    if (style.strikethrough) result = `~~${result}~~`;
-    if (style.highlight) result = `==${result}==`;
-    return result;
+        this.code = true;
+        return this;
+    }
+
+    apply(str: string): string {
+
+        let result = str;
+        if (this.bold) result = `**${result}**`;
+        if (this.italics) result = `_${result}_`;
+        if (this.strikethrough) result = `~~${result}~~`;
+        if (this.highlight) result = `==${result}==`;
+        if (this.code) result = `\`${result}\``;
+        return result;
+    }
+
+    static applyStyle(str: string, style: Style): string {
+
+        return style.apply(str);
+    }
 }
 
 function replaceStringWithBoolean(str: string): string | boolean {

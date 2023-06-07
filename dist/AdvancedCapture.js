@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Path = exports.getSampleConfig = exports.Variables = void 0;
+exports.Path = exports.Style = exports.getSampleConfig = exports.Variables = void 0;
 const CONFIG_PATH = 'Path to configuration file';
 const DATE_FORMAT = 'Date format';
 const TIME_FORMAT = 'Time format';
@@ -189,7 +189,7 @@ class Field {
             result = `[[${result}]]`;
         else if (this.config.print.externalLink)
             result = `[${result}](${this.config.print.externalLink})`;
-        return applyStyle(result, new Style(this.config.print.style));
+        return Style.applyStyle(result, new Style(this.config.print.style));
     }
     getFieldKey() {
         if (!this.config.row.include)
@@ -271,6 +271,7 @@ class Style {
         this.italics = false;
         this.strikethrough = false;
         this.highlight = false;
+        this.code = false;
         if (obj)
             Object.assign(this, obj);
     }
@@ -290,19 +291,29 @@ class Style {
         this.highlight = true;
         return this;
     }
+    withCode() {
+        this.code = true;
+        return this;
+    }
+    apply(str) {
+        let result = str;
+        if (this.bold)
+            result = `**${result}**`;
+        if (this.italics)
+            result = `_${result}_`;
+        if (this.strikethrough)
+            result = `~~${result}~~`;
+        if (this.highlight)
+            result = `==${result}==`;
+        if (this.code)
+            result = `\`${result}\``;
+        return result;
+    }
+    static applyStyle(str, style) {
+        return style.apply(str);
+    }
 }
-function applyStyle(str, style) {
-    let result = str;
-    if (style.bold)
-        result = `**${result}**`;
-    if (style.italics)
-        result = `_${result}_`;
-    if (style.strikethrough)
-        result = `~~${result}~~`;
-    if (style.highlight)
-        result = `==${result}==`;
-    return result;
-}
+exports.Style = Style;
 function replaceStringWithBoolean(str) {
     if (str === 'false')
         return false;
