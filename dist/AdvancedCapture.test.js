@@ -363,3 +363,123 @@ const vitest_1 = require("vitest");
         (0, vitest_1.expect)(AdvancedCapture_1.Variables.replaceInString('Pikachu likes var(--pref).')).toStrictEqual('Pikachu likes .');
     });
 });
+(0, vitest_1.describe)('Style class', () => {
+    (0, vitest_1.it)('should have no styles by default', () => {
+        const style = new AdvancedCapture_1.Style();
+        (0, vitest_1.expect)(style.bold).toBe(false);
+        (0, vitest_1.expect)(style.italics).toBe(false);
+        (0, vitest_1.expect)(style.strikethrough).toBe(false);
+        (0, vitest_1.expect)(style.highlight).toBe(false);
+    });
+    (0, vitest_1.it)('should return "x" with no styles', () => {
+        const style = new AdvancedCapture_1.Style();
+        (0, vitest_1.expect)(style.apply('x')).toStrictEqual('x');
+    });
+    (0, vitest_1.it)('should return "**x**" with only bold', () => {
+        const style = new AdvancedCapture_1.Style().withBold();
+        (0, vitest_1.expect)(style.apply('x')).toStrictEqual('**x**');
+    });
+    (0, vitest_1.it)('should return "_x_" with only italics', () => {
+        const style = new AdvancedCapture_1.Style().withItalics();
+        (0, vitest_1.expect)(style.apply('x')).toStrictEqual('_x_');
+    });
+    (0, vitest_1.it)('should return "~~x~~" with only strikethrough', () => {
+        const style = new AdvancedCapture_1.Style().withStrikethrough();
+        (0, vitest_1.expect)(style.apply('x')).toStrictEqual('~~x~~');
+    });
+    (0, vitest_1.it)('should return "==x==" with only highlight', () => {
+        const style = new AdvancedCapture_1.Style().withHighlight();
+        (0, vitest_1.expect)(style.apply('x')).toStrictEqual('==x==');
+    });
+    (0, vitest_1.it)('should return "`x`" with only code', () => {
+        const style = new AdvancedCapture_1.Style().withCode();
+        (0, vitest_1.expect)(style.apply('x')).toStrictEqual('`x`');
+    });
+    (0, vitest_1.it)('should have bold as true given object with bold=true property', () => {
+        const style = new AdvancedCapture_1.Style({ bold: true });
+        (0, vitest_1.expect)(style.bold).toBe(true);
+    });
+    (0, vitest_1.it)('should have italics as true given object with italics=true property', () => {
+        const style = new AdvancedCapture_1.Style({ italics: true });
+        (0, vitest_1.expect)(style.italics).toBe(true);
+    });
+    (0, vitest_1.it)('should have strikethrough as true given object with strikethrough=true property', () => {
+        const style = new AdvancedCapture_1.Style({ strikethrough: true });
+        (0, vitest_1.expect)(style.strikethrough).toBe(true);
+    });
+    (0, vitest_1.it)('should have highlight as true given object with highlight=true property', () => {
+        const style = new AdvancedCapture_1.Style({ highlight: true });
+        (0, vitest_1.expect)(style.highlight).toBe(true);
+    });
+    (0, vitest_1.it)('should have code as true given object with code=true property', () => {
+        const style = new AdvancedCapture_1.Style({ code: true });
+        (0, vitest_1.expect)(style.code).toBe(true);
+    });
+    (0, vitest_1.describe)('Actual count vs applied', () => {
+        function generateArrangements(e) {
+            const result = [];
+            const helper = (h) => {
+                if (h.length <= e.length)
+                    result.push(h);
+                for (let i = 0; i < e.length; i++)
+                    if (!h.includes(e[i]))
+                        helper([...h, e[i]]);
+            };
+            helper([]);
+            return result;
+        }
+        function getStyleCounts(styles) {
+            const result = {};
+            const namePerms = generateArrangements(Object.keys(styles));
+            for (const style of Object.keys(styles))
+                result[style] = namePerms.reduce((acc, curr) => {
+                    return acc + curr.filter((sty) => sty === style).length;
+                }, 0);
+            return result;
+        }
+        function getTextPerms(styles) {
+            const stylePerms = generateArrangements(Object.values(styles));
+            const result = [];
+            for (const perm of stylePerms) {
+                let str = 'x';
+                for (const style of perm)
+                    str = style.apply(str);
+                result.push(str);
+            }
+            return result;
+        }
+        function getRegexCounts(patterns, textPerms) {
+            const result = Object.keys(patterns).reduce((acc, key) => {
+                acc[key] = 0;
+                return acc;
+            }, {});
+            textPerms.forEach((str) => {
+                Object.keys(patterns).forEach((pat) => {
+                    if (str.match(patterns[pat]))
+                        result[pat]++;
+                });
+            });
+            return result;
+        }
+        const styles = {
+            bold: new AdvancedCapture_1.Style().withBold(),
+            italics: new AdvancedCapture_1.Style().withItalics(),
+            strikethrough: new AdvancedCapture_1.Style().withStrikethrough(),
+            highlight: new AdvancedCapture_1.Style().withHighlight(),
+            code: new AdvancedCapture_1.Style().withCode()
+        };
+        const patterns = {
+            bold: /\*\*.*\*\*/,
+            italics: /_.*_/,
+            strikethrough: /~~.*~~/,
+            highlight: /==.*==/,
+            code: /`.*`/
+        };
+        const styleCounts = getStyleCounts(styles);
+        const regexCounts = getRegexCounts(patterns, getTextPerms(styles));
+        for (const style of Object.keys(styles))
+            (0, vitest_1.test)(`${styles[style]} regex count should match apply count`, () => {
+                (0, vitest_1.expect)(regexCounts[style]).toEqual(styleCounts[style]);
+            });
+    });
+});

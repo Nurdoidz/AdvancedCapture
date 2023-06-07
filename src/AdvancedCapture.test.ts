@@ -1,4 +1,4 @@
-import { Path, getSampleConfig, Variables } from './AdvancedCapture';
+import { Path, getSampleConfig, Variables, Style } from './AdvancedCapture';
 import { describe, expect, it, test } from 'vitest';
 
 describe('Path', () => {
@@ -362,5 +362,142 @@ describe('Variables.replaceInString()', () => {
     });
     it('should return "Pikachu likes ." given "Pikachu likes var(--pref).", with no "pref" variable', () => {
         expect(Variables.replaceInString('Pikachu likes var(--pref).')).toStrictEqual('Pikachu likes .');
+    });
+});
+
+describe('Style class', () => {
+    it('should have no styles by default', () => {
+        const style = new Style();
+        expect(style.bold).toBe(false);
+        expect(style.italics).toBe(false);
+        expect(style.strikethrough).toBe(false);
+        expect(style.highlight).toBe(false);
+    });
+    it('should return "x" with no styles', () => {
+        const style = new Style();
+        expect(style.apply('x')).toStrictEqual('x');
+        expect(Style.applyStyle('x', style)).toStrictEqual('x');
+    });
+    it('should return "**x**" with only bold', () => {
+        const style = new Style().withBold();
+        expect(style.apply('x')).toStrictEqual('**x**');
+        expect(Style.applyStyle('x', style)).toStrictEqual('**x**');
+    });
+    it('should return "_x_" with only italics', () => {
+        const style = new Style().withItalics();
+        expect(style.apply('x')).toStrictEqual('_x_');
+        expect(Style.applyStyle('x', style)).toStrictEqual('_x_');
+    });
+    it('should return "~~x~~" with only strikethrough', () => {
+        const style = new Style().withStrikethrough();
+        expect(style.apply('x')).toStrictEqual('~~x~~');
+        expect(Style.applyStyle('x', style)).toStrictEqual('~~x~~');
+    });
+    it('should return "==x==" with only highlight', () => {
+        const style = new Style().withHighlight();
+        expect(style.apply('x')).toStrictEqual('==x==');
+        expect(Style.applyStyle('x', style)).toStrictEqual('==x==');
+    });
+    it('should return "`x`" with only code', () => {
+        const style = new Style().withCode();
+        expect(style.apply('x')).toStrictEqual('`x`');
+        expect(Style.applyStyle('x', style)).toStrictEqual('`x`');
+    });
+    it('should have bold as true given object with bold=true property', () => {
+        const style = new Style({ bold: true });
+        expect(style.bold).toBe(true);
+    });
+    it('should have italics as true given object with italics=true property', () => {
+        const style = new Style({ italics: true });
+        expect(style.italics).toBe(true);
+    });
+    it('should have strikethrough as true given object with strikethrough=true property', () => {
+        const style = new Style({ strikethrough: true });
+        expect(style.strikethrough).toBe(true);
+    });
+    it('should have highlight as true given object with highlight=true property', () => {
+        const style = new Style({ highlight: true });
+        expect(style.highlight).toBe(true);
+    });
+    it('should have code as true given object with code=true property', () => {
+        const style = new Style({ code: true });
+        expect(style.code).toBe(true);
+    });
+    describe('Actual count vs applied', () => {
+        interface kvObj {
+            [key: string]: any
+        }
+        function generateArrangements(e: any): any[][] {
+
+            const result: any[] = [];
+            const helper = (h: any[]) => {
+                if (h.length <= e.length) result.push(h);
+                for (let i = 0; i < e.length; i++) if (!h.includes(e[i])) helper([...h, e[i]]);
+            };
+            helper([]);
+            return result;
+        }
+
+        function getStyleCounts(styles: object): object {
+
+            const result: kvObj = {};
+            const namePerms = generateArrangements(Object.keys(styles));
+
+            for (const style of Object.keys(styles)) result[style] = namePerms.reduce((acc, curr) => {
+                return acc + curr.filter((sty: string) => sty === style).length;
+            }, 0);
+            return result;
+        }
+
+        function getTextPerms(styles: object): any[] {
+
+            const stylePerms = generateArrangements(Object.values(styles));
+            const result = [];
+            for (const perm of stylePerms) {
+                let str = 'x';
+                for (const style of perm) str = style.apply(str);
+                result.push(str);
+            }
+            return result;
+        }
+
+
+        function getRegexCounts(patterns: kvObj, textPerms: any[]) {
+
+            const result: kvObj = Object.keys(patterns).reduce((acc: any, key) => {
+                acc[key] = 0;
+                return acc;
+            }, {});
+
+            textPerms.forEach((str) => {
+                Object.keys(patterns).forEach((pat) => {
+                    if (str.match(patterns[pat])) result[pat]++;
+                });
+            });
+            return result;
+        }
+
+        const styles: kvObj = {
+            bold: new Style().withBold(),
+            italics: new Style().withItalics(),
+            strikethrough: new Style().withStrikethrough(),
+            highlight: new Style().withHighlight(),
+            code: new Style().withCode()
+        };
+
+        const patterns: kvObj = {
+            bold: /\*\*.*\*\*/,
+            italics: /_.*_/,
+            strikethrough: /~~.*~~/,
+            highlight: /==.*==/,
+            code: /`.*`/
+        };
+
+        const styleCounts: kvObj = getStyleCounts(styles);
+        const regexCounts: kvObj = getRegexCounts(patterns, getTextPerms(styles));
+
+        for (const style of Object.keys(styles)) test(`${style} regex count should match apply count`, () => {
+            expect(regexCounts[style]).toEqual(styleCounts[style]);
+        });
     });
 });
