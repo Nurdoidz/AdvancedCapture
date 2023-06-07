@@ -1,0 +1,50 @@
+{
+  "date": {
+    "row": {
+      "include": false,
+      "format": "YYYY-MM-DD",
+      "keyPrefix": "",
+      "keySuffix": "",
+      "valuePrefix": "",
+      "valueSuffix": ""
+  },
+    "print": {
+      "include": false,
+      "format": "YYYY-MM-DD",
+      "prefix": "",
+      "suffix": "",
+      "separator": " - ",
+      "internalLink": false,
+      "externalLink": "",
+      "style": {
+        "bold": false,
+        "italics": false,
+        "strikethrough": false,
+        "highlight": false
+      }
+    }
+  },
+  "time": {
+    "row": {
+      "include": false,
+      "format": "HH:mm:ss",
+      "prefix": "",
+      "suffix": ""
+    },
+    "print": {
+      "include": false,
+      "format": "HH:mm:ss",
+      "prefix": "",
+      "suffix": "",
+      "separator": " - ",
+      "internalLink": false,
+      "externalLink": "",
+      "style": {
+        "bold": false,
+        "italics": false,
+        "strikethrough": false,
+        "highlight": false
+      }
+    }
+  }
+}
