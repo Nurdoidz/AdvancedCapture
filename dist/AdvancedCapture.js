@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Path = exports.getSampleConfig = exports.Variables = void 0;
 const CONFIG_PATH = 'Path to configuration file';
+const DATE_FORMAT = 'Date format';
+const TIME_FORMAT = 'Time format';
 module.exports = {
     entry: main,
     settings: {
@@ -12,6 +14,16 @@ module.exports = {
                 type: 'text',
                 defaultValue: 'Scripts/QuickAdd/AdvancedCapture/Config.json',
                 placeholder: 'path/to/config.json'
+            },
+            [DATE_FORMAT]: {
+                type: 'text',
+                defaultValue: 'YYYY-MM-DD',
+                placeholder: 'YYYY-MM-DD'
+            },
+            [TIME_FORMAT]: {
+                type: 'text',
+                defaultValue: 'HH:mm:ss',
+                placeholder: 'HH:mm:ss'
             },
             'Debug': {
                 type: 'checkbox',
@@ -38,6 +50,12 @@ const Variables = {
                 result = this.replaceInString(result);
         }
         return result;
+    },
+    fullReplace(obj) {
+        return applyRecursive(obj, (o) => {
+            o = this.replaceInString(o);
+            return replaceStringWithBoolean(o);
+        });
     }
 };
 exports.Variables = Variables;
@@ -56,6 +74,8 @@ async function main(quickAdd, settings) {
         return;
     }
     info('Read config OK');
+    const input = new Input();
+    stampDateTime(input);
     info('!Stopping');
 }
 async function readConfig() {
@@ -92,6 +112,10 @@ async function readConfig() {
     if (config)
         Variables.config = config;
     return true;
+}
+function stampDateTime(input) {
+    input.addField(new DateTimeField(Variables.config.date));
+    input.addField(new DateTimeField(Variables.config.time));
 }
 async function ensureFolderExists(path) {
     if (!path.hasFolder())
@@ -137,6 +161,168 @@ function getSampleConfig() {
     };
 }
 exports.getSampleConfig = getSampleConfig;
+class Input {
+    constructor() {
+        this.fields = [];
+    }
+    add(input, config) {
+        this.fields.push(new Field(input, config));
+    }
+    addField(field) {
+        this.fields.push(field);
+    }
+}
+class Field {
+    constructor(input, config) {
+        this.input = input;
+        this.config = Variables.fullReplace(config);
+    }
+    getSeparator() {
+        return Variables.replaceInString(this.config.print.separator);
+    }
+    getPrintString() {
+        if (!this.config.print.include)
+            return '';
+        let result = this.input;
+        result = `${this.config.print.prefix}${result}${this.config.print.suffix}`;
+        if (this.config.print.internalLink)
+            result = `[[${result}]]`;
+        else if (this.config.print.externalLink)
+            result = `[${result}](${this.config.print.externalLink})`;
+        return applyStyle(result, new Style(this.config.print.style));
+    }
+    getFieldKey() {
+        if (!this.config.row.include)
+            return '';
+        return `${this.config.row.keyPrefix}${this.input}${this.config.row.keySuffix}`;
+    }
+    getFieldValue() {
+        if (!this.config.row.include)
+            return '';
+        return `${this.config.row.valuePrefix}${this.input}${this.config.row.valueSuffix}`;
+    }
+}
+class DateTimeField extends Field {
+    constructor(config) {
+        super('', config);
+    }
+    getPrintString() {
+        this.input = QuickAdd.date.now(this.config.print.format);
+        return super.getPrintString();
+    }
+    getFieldValue() {
+        this.input = QuickAdd.date.now(this.config.row.format);
+        return super.getFieldValue();
+    }
+}
+class FieldConfig {
+    constructor(row, print) {
+        this.row = {
+            'include': false,
+            'keyPrefix': '',
+            'keySuffix': '',
+            'valuePrefix': '',
+            'valueSuffix': ''
+        };
+        this.print = {
+            'include': false,
+            'prefix': '',
+            'suffix': '',
+            'separator': ' - ',
+            'internalLink': false,
+            'externalLink': '',
+            'style': {
+                'bold': false,
+                'italics': false,
+                'strikethrough': false,
+                'highlight': false
+            }
+        };
+        if (row)
+            Object.assign(this.row, row);
+        if (print)
+            Object.assign(this.print, print);
+    }
+}
+class DateTimeFieldConfig extends FieldConfig {
+    constructor(defaultFormat, row, print) {
+        super(row, print);
+        if (row)
+            if ('format' in row)
+                this.row.format = row.format;
+            else
+                this.row.format = defaultFormat;
+        if (print)
+            if ('format' in print)
+                this.print.format = print.format;
+            else
+                this.print.format = defaultFormat;
+    }
+    newDate(row, print) {
+        return new DateTimeFieldConfig('YYYY-MM-DD', row, print);
+    }
+    newTime(row, print) {
+        return new DateTimeFieldConfig('HH:mm:ss', row, print);
+    }
+}
+class Style {
+    constructor(obj) {
+        this.bold = false;
+        this.italics = false;
+        this.strikethrough = false;
+        this.highlight = false;
+        if (obj)
+            Object.assign(this, obj);
+    }
+    withBold() {
+        this.bold = true;
+        return this;
+    }
+    withItalics() {
+        this.italics = true;
+        return this;
+    }
+    withStrikethrough() {
+        this.strikethrough = true;
+        return this;
+    }
+    withHighlight() {
+        this.highlight = true;
+        return this;
+    }
+}
+function applyStyle(str, style) {
+    let result = str;
+    if (style.bold)
+        result = `**${result}**`;
+    if (style.italics)
+        result = `_${result}_`;
+    if (style.strikethrough)
+        result = `~~${result}~~`;
+    if (style.highlight)
+        result = `==${result}==`;
+    return result;
+}
+function replaceStringWithBoolean(str) {
+    if (str === 'false')
+        return false;
+    if (str === 'true')
+        return true;
+    return str;
+}
+function applyRecursive(obj, func) {
+    if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean')
+        return func(obj);
+    else if (Array.isArray(obj))
+        return obj.map((item) => applyRecursive(item, func));
+    else if (typeof obj === 'object' && obj !== null) {
+        const newObj = {};
+        for (const key in obj)
+            newObj[key] = applyRecursive(obj[key], func);
+        return newObj;
+    }
+    return obj;
+}
 class Path {
     constructor(path) {
         this.reMatchFile = RegExp(/([^/]+)\.(\w+)$/);
