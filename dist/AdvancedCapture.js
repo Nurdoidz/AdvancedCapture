@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Path = exports.applyRecursive = exports.replaceStringWithBoolean = exports.Style = exports.getSampleConfig = exports.Variables = void 0;
+exports.Path = exports.applyRecursive = exports.replaceStringWithBoolean = exports.Style = exports.getSampleConfig = exports.tryParseJsonObject = exports.Variables = void 0;
 const CONFIG_PATH = 'Path to configuration file';
 const DATE_FORMAT = 'Date format';
 const TIME_FORMAT = 'Time format';
@@ -97,7 +97,7 @@ async function readConfig() {
         }
     }
     const content = await Obsidian.vault.read(file);
-    const config = tryParseJSONObject(content);
+    const config = tryParseJsonObject(content);
     if (!config)
         if (!content.trim()) {
             if (await QuickAdd.yesNoPrompt(`No config found. Want to create a sample at '${path}'?`)) {
@@ -123,7 +123,7 @@ async function ensureFolderExists(path) {
     if (!Obsidian.vault.getAbstractFileByPath(path.getFolder))
         await Obsidian.vault.createFolder(path.getFolder);
 }
-function tryParseJSONObject(jsonString) {
+function tryParseJsonObject(jsonString) {
     try {
         const obj = JSON.parse(jsonString);
         if (obj && typeof obj === 'object')
@@ -133,6 +133,7 @@ function tryParseJSONObject(jsonString) {
         return undefined;
     }
 }
+exports.tryParseJsonObject = tryParseJsonObject;
 function getSampleConfig() {
     return {
         'categories': {

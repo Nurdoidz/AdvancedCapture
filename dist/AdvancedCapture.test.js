@@ -594,3 +594,11 @@ const vitest_1 = require("vitest");
         });
     });
 });
+(0, vitest_1.describe)('tryParseJsonObject', () => {
+    (0, vitest_1.it)('should return undefined given an empty string', () => {
+        (0, vitest_1.expect)(AC.tryParseJsonObject('')).toStrictEqual(undefined);
+    });
+    (0, vitest_1.it)('should return object{ name: "Carl" } given { "name": "Carl" } string', () => {
+        (0, vitest_1.expect)(AC.tryParseJsonObject('{ "name": "Carl" }')).toStrictEqual({ name: 'Carl' });
+    });
+});

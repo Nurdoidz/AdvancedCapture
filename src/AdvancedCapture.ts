@@ -118,7 +118,7 @@ async function readConfig(): Promise<boolean> {
     }
 
     const content = await Obsidian.vault.read(file);
-    const config = tryParseJSONObject(content);
+    const config = tryParseJsonObject(content);
     if (!config) if (!content.trim()) {
         if (await QuickAdd.yesNoPrompt(`No config found. Want to create a sample at '${path}'?`)) {
             Obsidian.vault.modify(file, JSON.stringify(getSampleConfig(), null, 2));
@@ -146,7 +146,7 @@ async function ensureFolderExists(path: Path): Promise<void> {
     if (!Obsidian.vault.getAbstractFileByPath(path.getFolder)) await Obsidian.vault.createFolder(path.getFolder);
 }
 
-function tryParseJSONObject(jsonString: string): object | undefined {
+export function tryParseJsonObject(jsonString: string): object | undefined {
 
     try {
         const obj = JSON.parse(jsonString);

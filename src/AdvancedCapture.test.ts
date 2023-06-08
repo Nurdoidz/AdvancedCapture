@@ -585,3 +585,12 @@ describe('applyRecursive()', () => {
         });
     });
 });
+
+describe('tryParseJsonObject', () => {
+    it('should return undefined given an empty string', () => {
+        expect(AC.tryParseJsonObject('')).toStrictEqual(undefined);
+    });
+    it('should return object{ name: "Carl" } given { "name": "Carl" } string', () => {
+        expect(AC.tryParseJsonObject('{ "name": "Carl" }')).toStrictEqual({ name: 'Carl' });
+    });
+});
