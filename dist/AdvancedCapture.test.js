@@ -537,6 +537,60 @@ const vitest_1 = require("vitest");
         (0, vitest_1.expect)(AC.replaceStringWithBoolean('')).toStrictEqual('');
     });
     (0, vitest_1.it)('should return " " given " "', () => {
-        (0, vitest_1.expect)((0, AdvancedCapture_1.replaceStringWithBoolean)(' ')).toStrictEqual(' ');
+        (0, vitest_1.expect)(AC.replaceStringWithBoolean(' ')).toStrictEqual(' ');
+    });
+});
+(0, vitest_1.describe)('applyRecursive()', () => {
+    const multiObj = {
+        alpha: 1,
+        beta: {
+            charlie: false,
+            delta: [
+                {
+                    epsilon: 'ep'
+                },
+                {
+                    zeta: 7.0
+                }
+            ]
+        }
+    };
+    (0, vitest_1.it)('should return the unchanged object given a blank function', () => {
+        const fun = (o) => {
+            return o;
+        };
+        const num = 1;
+        (0, vitest_1.expect)(AC.applyRecursive(num, fun)).toStrictEqual(num);
+        const dec = 1.0;
+        (0, vitest_1.expect)(AC.applyRecursive(dec, fun)).toStrictEqual(dec);
+        const bool = true;
+        (0, vitest_1.expect)(AC.applyRecursive(bool, fun)).toStrictEqual(bool);
+        const str = 'x';
+        (0, vitest_1.expect)(AC.applyRecursive(str, fun)).toStrictEqual(str);
+        const obj = {};
+        (0, vitest_1.expect)(AC.applyRecursive(obj, fun)).toStrictEqual(obj);
+        const arr = [];
+        (0, vitest_1.expect)(AC.applyRecursive(arr, fun)).toStrictEqual(arr);
+        (0, vitest_1.expect)(AC.applyRecursive(multiObj, fun)).toStrictEqual(multiObj);
+    });
+    (0, vitest_1.describe)('when applying `return "rerere"` to all children recursively', () => {
+        const newObj = AC.applyRecursive(multiObj, (o) => {
+            return 'rerere';
+        });
+        (0, vitest_1.it)('should return "rerere" when given a child number', () => {
+            (0, vitest_1.expect)(newObj.alpha).toStrictEqual('rerere');
+        });
+        (0, vitest_1.it)('should return "rerere" when given a child boolean', () => {
+            (0, vitest_1.expect)(newObj.beta.charlie).toStrictEqual('rerere');
+        });
+        (0, vitest_1.it)('should return "rerere" when given a child string', () => {
+            (0, vitest_1.expect)(newObj.beta.delta[0].epsilon).toStrictEqual('rerere');
+        });
+        (0, vitest_1.it)('should return "rerere" when given a child decimal', () => {
+            (0, vitest_1.expect)(newObj.beta.delta[1].zeta).toStrictEqual('rerere');
+        });
+        (0, vitest_1.it)('should not return the same object', () => {
+            (0, vitest_1.expect)(newObj).not.toEqual(multiObj);
+        });
     });
 });

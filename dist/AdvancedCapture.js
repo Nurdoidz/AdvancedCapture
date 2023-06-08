@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Path = exports.replaceStringWithBoolean = exports.Style = exports.getSampleConfig = exports.Variables = void 0;
+exports.Path = exports.applyRecursive = exports.replaceStringWithBoolean = exports.Style = exports.getSampleConfig = exports.Variables = void 0;
 const CONFIG_PATH = 'Path to configuration file';
 const DATE_FORMAT = 'Date format';
 const TIME_FORMAT = 'Time format';
@@ -335,6 +335,7 @@ function applyRecursive(obj, func) {
     }
     return obj;
 }
+exports.applyRecursive = applyRecursive;
 class Path {
     constructor(path) {
         this.reMatchFile = RegExp(/([^/]+)\.(\w+)$/);

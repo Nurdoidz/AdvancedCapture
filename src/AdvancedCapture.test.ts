@@ -527,6 +527,61 @@ describe('replaceStringWithBoolean()', () => {
         expect(AC.replaceStringWithBoolean('')).toStrictEqual('');
     });
     it('should return " " given " "', () => {
-        expect(replaceStringWithBoolean(' ')).toStrictEqual(' ');
+        expect(AC.replaceStringWithBoolean(' ')).toStrictEqual(' ');
+    });
+});
+
+describe('applyRecursive()', () => {
+    const multiObj = {
+        alpha: 1,
+        beta: {
+            charlie: false,
+            delta: [
+                {
+                    epsilon: 'ep'
+                },
+                {
+                    zeta: 7.0
+                }
+            ]
+        }
+    };
+    it('should return the unchanged object given a blank function', () => {
+        const fun = (o: any) => {
+            return o;
+        };
+        const num = 1;
+        expect(AC.applyRecursive(num, fun)).toStrictEqual(num);
+        const dec = 1.0;
+        expect(AC.applyRecursive(dec, fun)).toStrictEqual(dec);
+        const bool = true;
+        expect(AC.applyRecursive(bool, fun)).toStrictEqual(bool);
+        const str = 'x';
+        expect(AC.applyRecursive(str, fun)).toStrictEqual(str);
+        const obj = {};
+        expect(AC.applyRecursive(obj, fun)).toStrictEqual(obj);
+        const arr: any[] = [];
+        expect(AC.applyRecursive(arr, fun)).toStrictEqual(arr);
+        expect(AC.applyRecursive(multiObj, fun)).toStrictEqual(multiObj);
+    });
+    describe('when applying `return "rerere"` to all children recursively', () => {
+        const newObj = AC.applyRecursive(multiObj, (o) => {
+            return 'rerere';
+        });
+        it('should return "rerere" when given a child number', () => {
+            expect(newObj.alpha).toStrictEqual('rerere');
+        });
+        it('should return "rerere" when given a child boolean', () => {
+            expect(newObj.beta.charlie).toStrictEqual('rerere');
+        });
+        it('should return "rerere" when given a child string', () => {
+            expect(newObj.beta.delta[0].epsilon).toStrictEqual('rerere');
+        });
+        it('should return "rerere" when given a child decimal', () => {
+            expect(newObj.beta.delta[1].zeta).toStrictEqual('rerere');
+        });
+        it('should not return the same object', () => {
+            expect(newObj).not.toEqual(multiObj);
+        });
     });
 });

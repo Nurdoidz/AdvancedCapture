@@ -396,7 +396,7 @@ export function replaceStringWithBoolean(str: string): string | boolean {
     return str;
 }
 
-function applyRecursive(obj: any, func: (arg: any) => any): any {
+export function applyRecursive(obj: any, func: (arg: any) => any): any {
 
     if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean') return func(obj);
     else if (Array.isArray(obj)) return obj.map((item) => applyRecursive(item, func));
