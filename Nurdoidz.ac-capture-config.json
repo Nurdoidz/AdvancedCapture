@@ -1,0 +1,563 @@
+{
+  "variables": {
+    "globalCapturePath": "Journal",
+    "listsPath": "var(--globalCapturePath)/Lists"
+  },
+  "dateExport": {
+    "csv": {
+      "include": true,
+      "format": "YYYY-MM-DD"
+    }
+  },
+  "timeExport": {
+    "csv": {
+      "include": true,
+      "format": "HH:mm:ss"
+    },
+    "print": {
+      "include": true,
+      "format": "HH:mm:ss",
+      "style": {
+        "code": true
+      }
+    }
+  },
+  "categories": {
+    "Anime": {
+      "icon": "👁",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+        },
+        "print": {
+          "include": true
+        }
+      },
+      "fields": [
+        {
+          "name": "Anime Title",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/Anime List.md",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true,
+              "separator": " ",
+              "internalLink": true,
+              "style": {
+                "italics": true
+              }
+            }
+          }
+        },
+        {
+          "name": "Episode",
+          "prompt": "inputPrompt",
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true,
+              "prefix": "e"
+            }
+          }
+        },
+        {
+          "name": "Rating",
+          "prompt": "inputPrompt",
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true,
+              "style": {
+                "bold": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Bible": {
+      "icon": "📖",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+        },
+        "print": {
+          "include": true
+        }
+      },
+      "fields": [
+        {
+          "name": "Book",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/Books of the Bible.md",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true,
+              "separator": " ",
+              "style": {
+                "italics": true
+              }
+            }
+          }
+        },
+        {
+          "name": "Chapter",
+          "prompt": "inputPrompt",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true,
+              "prefix": "ch"
+            }
+          }
+        }
+      ]
+    },
+    "Code": {
+      "icon": "🚀",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+        },
+        "print": {
+          "include": true
+        }
+      },
+      "fields": [
+        {
+          "name": "Project",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/Project List.md",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true,
+              "separator": " ",
+              "internalLink": true,
+              "style": {
+                "italics": true
+              }
+            }
+          }
+        },
+        {
+          "name": "Action",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/Code Actions.md",
+          "hasIcons": true,
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true
+            }
+          }
+        }
+      ]
+    },
+    "Cook": {
+      "icon": "🥘",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+        },
+        "print": {
+          "include": true
+        }
+      },
+      "fields": [
+        {
+          "name": "Recipe",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/Food List.md",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true,
+              "separator": " ",
+              "style": {
+                "italics": true
+              }
+            }
+          }
+        },
+        {
+          "name": "Rating",
+          "prompt": "inputPrompt",
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true,
+              "style": {
+                "bold": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Faith": {
+      "icon": "🕊",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+        },
+        "print": {
+          "include": true
+        }
+      },
+      "fields": [
+        {
+          "name": "Action",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/Faith Actions.md",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true,
+              "separator": " ",
+              "style": {
+                "italics": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Japanese": {
+      "icon": "🏯",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+        },
+        "print": {
+          "include": true
+        }
+      },
+      "fields": [
+        {
+          "name": "Action",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/Japanese Actions.md",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true,
+              "separator": " ",
+              "style": {
+                "italics": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Journal": {
+      "icon": "📓",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+        },
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      }
+    },
+    "Quick Capture": {
+      "icon": "⚡",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+        },
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "todo": true
+    },
+    "Socialize": {
+      "icon": "💬",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+          },
+        "print": {
+          "include": true
+        }
+      },
+      "fields": [
+        {
+          "name": "Person",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/List of People.md",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+            },
+            "print": {
+              "include": true,
+              "separator": " ",
+              "internalLink": true
+            }
+          }
+        }
+      ]
+    },
+    "TV": {
+      "icon": "📺",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+          },
+        "print": {
+          "include": true
+        }
+      },
+      "fields": [
+        {
+          "name": "Title",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/TV List.md",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+              },
+            "print": {
+              "include": true,
+              "separator": " ",
+              "internalLink": true,
+              "style": {
+                "italics": true
+              }
+            }
+          }
+        },
+        {
+          "name": "Episode",
+          "prompt": "inputPrompt",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+              },
+            "print": {
+              "include": true,
+              "prefix": "e"
+            }
+          }
+        },
+        {
+          "name": "Rating",
+          "prompt": "inputPrompt",
+          "export": {
+            "csv": {
+              "include": true
+              },
+            "print": {
+              "include": true,
+              "style": {
+                "bold": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Target":{
+      "icon": "🎯",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+          },
+        "print": {
+          "include": true
+        }
+      },
+      "fields": [
+        {
+          "name": "Target",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/Target List.md",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+              },
+            "print": {
+              "include": true,
+              "separator": " ",
+              "style": {
+                "italics": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Work": {
+      "icon": "💼",
+      "iconExport": {
+        "print": {
+          "include": true,
+          "separator": " "
+        }
+      },
+      "enableComment": true,
+      "commentExport": {
+        "csv": {
+          "include": true
+          },
+        "print": {
+          "include": true
+        }
+      },
+      "fields": [
+        {
+          "name": "Action",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/Work Actions.md",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+              },
+            "print": {
+              "include": true,
+              "separator": " ",
+              "style": {
+                "italics": true
+              }
+            }
+          }
+        },
+        {
+          "name": "Involving",
+          "prompt": "suggester",
+          "listPath": "var(--listsPath)/List of People.md",
+          "required": true,
+          "export": {
+            "csv": {
+              "include": true
+              },
+            "print": {
+              "include": true,
+              "internalLink": true
+            }
+          }
+        }
+      ]
+    }
+  }
+}

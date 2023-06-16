@@ -1,4 +1,4 @@
-import * as AC from './AdvancedCapture';
+import * as AC from './Common';
 import { describe, expect, it, test } from 'vitest';
 
 describe('Path', () => {
@@ -443,9 +443,11 @@ describe('Style class', () => {
             const result: kvObj = {};
             const namePerms = generateArrangements(Object.keys(styles));
 
-            for (const style of Object.keys(styles)) result[style] = namePerms.reduce((acc, curr) => {
-                return acc + curr.filter((sty: string) => sty === style).length;
-            }, 0);
+            for (const style of Object.keys(styles)) {
+                result[style] = namePerms.reduce((acc, curr) => {
+                    return acc + curr.filter((sty: string) => sty === style).length;
+                }, 0);
+            }
             return result;
         }
 
@@ -496,9 +498,11 @@ describe('Style class', () => {
         const styleCounts: kvObj = getStyleCounts(styles);
         const regexCounts: kvObj = getRegexCounts(patterns, getTextPerms(styles));
 
-        for (const style of Object.keys(styles)) test(`${style} regex count should match apply count`, () => {
-            expect(regexCounts[style]).toEqual(styleCounts[style]);
-        });
+        for (const style of Object.keys(styles)) {
+            test(`${style} regex count should match apply count`, () => {
+                expect(regexCounts[style]).toEqual(styleCounts[style]);
+            });
+        }
     });
 });
 

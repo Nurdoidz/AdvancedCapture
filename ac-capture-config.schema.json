@@ -1,0 +1,606 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/Config",
+  "definitions": {
+      "Config": {
+          "type": "object",
+          "properties": {
+              "variables": {
+                  "$ref": "#/definitions/QaVariables"
+              },
+              "dateExport": {
+                  "type": "object",
+                  "title": "Date Export",
+                  "description": "How AdvancedCapture should prepare the capture date for export. Inactive by default.",
+                  "properties": {
+                      "csv": {
+                          "type": "object",
+                          "title": "CSV Export",
+                          "description": "Attributes for CSV export. Empty by default.",
+                          "properties": {
+                              "include": {
+                                  "type": "boolean",
+                                  "title": "Include in CSV Export",
+                                  "description": "Whether to include this field in the CSV export. False by default.",
+                                  "defaultSnippets": [
+                                      {
+                                          "body": "^${1|true,false|}"
+                                      }
+                                  ]
+                              },
+                              "format": {
+                                  "type": "string",
+                                  "title": "Date Format",
+                                  "description": "The date format to use when exporting to CSV. \"YYYY-MM-DD\" by default."
+                              },
+                              "keyPrefix": {
+                                  "type": "string",
+                                  "title": "Key Prefix",
+                                  "description": "Prefix for this field's key (column) in CSV export. Only used when creating a CSV file for the first time. Disabled by default."
+                              },
+                              "keySuffix": {
+                                  "type": "string",
+                                  "title": "Key Suffix",
+                                  "description": "Suffix for this field's key (column) in CSV export. Only used when creating a CSV file for the first time. Disabled by default."
+                              },
+                              "valuePrefix": {
+                                  "type": "string",
+                                  "title": "Value Prefix",
+                                  "description": "Prefix for this field's value (cell in row) in CSV export. Disabled by default."
+                              },
+                              "valueSuffix": {
+                                  "type": "string",
+                                  "title": "Value Suffix",
+                                  "description": "Suffix for this field's value (cell in row) in CSV export. Disabled by default."
+                              }
+                          },
+                          "additionalProperties": false
+                      },
+                      "print": {
+                          "type": "object",
+                          "properties": {
+                              "include": {
+                                  "type": "boolean",
+                                  "title": "Include in Notes Export",
+                                  "description": "Whether to include this field when exporting to notes. False by default.",
+                                  "defaultSnippets": [
+                                      {
+                                          "body": "^${1|true,false|}"
+                                      }
+                                  ]
+                              },
+                              "format": {
+                                  "type": "string",
+                                  "title": "Date Format",
+                                  "description": "The date format to use when exporting to notes. \"YYYY-MM-DD\" by default."
+                              },
+                              "prefix": {
+                                  "type": "string",
+                                  "title": "Prefix",
+                                  "description": "The prefix concatenated at the start of this field's input. Applied before styles and links. Disabled by default."
+                              },
+                              "suffix": {
+                                  "type": "string",
+                                  "title": "Suffix",
+                                  "description": "The suffix concatenated at the end of this field's input. Applied before styles and links. Disabled by default."
+                              },
+                              "separator": {
+                                  "type": "string",
+                                  "title": "Separator",
+                                  "description": "The separator added between this field and the previous field, if there is one. Note that setting this to an empty string will set the two fields together without any spacing. \" - \" by default."
+                              },
+                              "internalLink": {
+                                  "type": "boolean",
+                                  "title": "As Internal Link",
+                                  "description": "Whether to format this field as an internal link. Applied before styles but after pre/suffix. Disabled by default.",
+                                  "defaultSnippets": [
+                                      {
+                                          "body": "^${1|true,false|}"
+                                      }
+                                  ]
+                              },
+                              "externalLink": {
+                                  "type": "string",
+                                  "title": "As External Link",
+                                  "description": "Setting this to a URL will format this field as an external link. Disabled by default."
+                              },
+                              "style": {
+                                  "type": "object",
+                                  "title": "Formatting Style",
+                                  "description": "Markdown formatting style for this field. All styles are applied after links and pre/suffix. Disabled by default.",
+                                  "properties": {
+                                      "bold": {
+                                          "type": "boolean",
+                                          "title": "Bold",
+                                          "description": "Whether to apply bold formatting to this field. Disabled by default.",
+                                          "defaultSnippets": [
+                                              {
+                                                  "body": "^${1|true,false|}"
+                                              }
+                                          ]
+                                      },
+                                      "italics": {
+                                          "type": "boolean",
+                                          "title": "Italics",
+                                          "description": "Whether to apply italics formatting to this field. Disabled by default.",
+                                          "defaultSnippets": [
+                                              {
+                                                  "body": "^${1|true,false|}"
+                                              }
+                                          ]
+                                      },
+                                      "strikethrough": {
+                                          "type": "boolean",
+                                          "title": "Strikethrough",
+                                          "description": "Whether to apply strikethrough formatting to this field. Disabled by default.",
+                                          "defaultSnippets": [
+                                              {
+                                                  "body": "^${1|true,false|}"
+                                              }
+                                          ]
+                                      },
+                                      "highlight": {
+                                          "type": "boolean",
+                                          "title": "Highlight",
+                                          "description": "Whether to apply highlight formatting to this field. Disabled by default.",
+                                          "defaultSnippets": [
+                                              {
+                                                  "body": "^${1|true,false|}"
+                                              }
+                                          ]
+                                      },
+                                      "code": {
+                                          "type": "boolean",
+                                          "title": "Code",
+                                          "description": "Whether to apply code formatting to this field. Disabled by default.",
+                                          "defaultSnippets": [
+                                              {
+                                                  "body": "^${1|true,false|}"
+                                              }
+                                          ]
+                                      }
+                                  },
+                                  "additionalProperties": false
+                              }
+                          },
+                          "additionalProperties": false
+                      }
+                  },
+                  "additionalProperties": false
+              },
+              "timeExport": {
+                  "type": "object",
+                  "title": "Time Export",
+                  "description": "How AdvancedCapture should prepare the capture time for export. Inactive by default.",
+                  "properties": {
+                      "csv": {
+                          "type": "object",
+                          "title": "CSV Export",
+                          "description": "Attributes for CSV export. Empty by default.",
+                          "properties": {
+                              "include": {
+                                  "type": "boolean",
+                                  "title": "Include in CSV Export",
+                                  "description": "Whether to include this field in the CSV export. False by default.",
+                                  "defaultSnippets": [
+                                      {
+                                          "body": "^${1|true,false|}"
+                                      }
+                                  ]
+                              },
+                              "format": {
+                                  "type": "string",
+                                  "title": "Time Format",
+                                  "description": "The time format to use when exporting to CSV. \"HH:mm:ss\" by default."
+                              },
+                              "keyPrefix": {
+                                  "type": "string",
+                                  "title": "Key Prefix",
+                                  "description": "Prefix for this field's key (column) in CSV export. Only used when creating a CSV file for the first time. Disabled by default."
+                              },
+                              "keySuffix": {
+                                  "type": "string",
+                                  "title": "Key Suffix",
+                                  "description": "Suffix for this field's key (column) in CSV export. Only used when creating a CSV file for the first time. Disabled by default."
+                              },
+                              "valuePrefix": {
+                                  "type": "string",
+                                  "title": "Value Prefix",
+                                  "description": "Prefix for this field's value (cell in row) in CSV export. Disabled by default."
+                              },
+                              "valueSuffix": {
+                                  "type": "string",
+                                  "title": "Value Suffix",
+                                  "description": "Suffix for this field's value (cell in row) in CSV export. Disabled by default."
+                              }
+                          },
+                          "additionalProperties": false
+                      },
+                      "print": {
+                          "type": "object",
+                          "properties": {
+                              "include": {
+                                  "type": "boolean",
+                                  "title": "Include in Notes Export",
+                                  "description": "Whether to include this field when exporting to notes. False by default.",
+                                  "defaultSnippets": [
+                                      {
+                                          "body": "^${1|true,false|}"
+                                      }
+                                  ]
+                              },
+                              "format": {
+                                  "type": "string",
+                                  "title": "Time Format",
+                                  "description": "The time format to use when exporting to notes. \"HH:mm:ss\" by default."
+                              },
+                              "prefix": {
+                                  "type": "string",
+                                  "title": "Prefix",
+                                  "description": "The prefix concatenated at the start of this field's input. Applied before styles and links. Disabled by default."
+                              },
+                              "suffix": {
+                                  "type": "string",
+                                  "title": "Suffix",
+                                  "description": "The suffix concatenated at the end of this field's input. Applied before styles and links. Disabled by default."
+                              },
+                              "separator": {
+                                  "type": "string",
+                                  "title": "Separator",
+                                  "description": "The separator added between this field and the previous field, if there is one. Note that setting this to an empty string will set the two fields together without any spacing. \" - \" by default."
+                              },
+                              "internalLink": {
+                                  "type": "boolean",
+                                  "title": "As Internal Link",
+                                  "description": "Whether to format this field as an internal link. Applied before styles but after pre/suffix. Disabled by default.",
+                                  "defaultSnippets": [
+                                      {
+                                          "body": "^${1|true,false|}"
+                                      }
+                                  ]
+                              },
+                              "externalLink": {
+                                  "type": "string",
+                                  "title": "As External Link",
+                                  "description": "Setting this to a URL will format this field as an external link. Disabled by default."
+                              },
+                              "style": {
+                                  "type": "object",
+                                  "title": "Formatting Style",
+                                  "description": "Markdown formatting style for this field. All styles are applied after links and pre/suffix. Disabled by default.",
+                                  "properties": {
+                                      "bold": {
+                                          "type": "boolean",
+                                          "title": "Bold",
+                                          "description": "Whether to apply bold formatting to this field. Disabled by default.",
+                                          "defaultSnippets": [
+                                              {
+                                                  "body": "^${1|true,false|}"
+                                              }
+                                          ]
+                                      },
+                                      "italics": {
+                                          "type": "boolean",
+                                          "title": "Italics",
+                                          "description": "Whether to apply italics formatting to this field. Disabled by default.",
+                                          "defaultSnippets": [
+                                              {
+                                                  "body": "^${1|true,false|}"
+                                              }
+                                          ]
+                                      },
+                                      "strikethrough": {
+                                          "type": "boolean",
+                                          "title": "Strikethrough",
+                                          "description": "Whether to apply strikethrough formatting to this field. Disabled by default.",
+                                          "defaultSnippets": [
+                                              {
+                                                  "body": "^${1|true,false|}"
+                                              }
+                                          ]
+                                      },
+                                      "highlight": {
+                                          "type": "boolean",
+                                          "title": "Highlight",
+                                          "description": "Whether to apply highlight formatting to this field. Disabled by default.",
+                                          "defaultSnippets": [
+                                              {
+                                                  "body": "^${1|true,false|}"
+                                              }
+                                          ]
+                                      },
+                                      "code": {
+                                          "type": "boolean",
+                                          "title": "Code",
+                                          "description": "Whether to apply code formatting to this field. Disabled by default.",
+                                          "defaultSnippets": [
+                                              {
+                                                  "body": "^${1|true,false|}"
+                                              }
+                                          ]
+                                      }
+                                  },
+                                  "additionalProperties": false
+                              }
+                          },
+                          "additionalProperties": false
+                      }
+                  },
+                  "additionalProperties": false
+              },
+              "categories": {
+                  "$ref": "#/definitions/Categories"
+              }
+          },
+          "additionalProperties": false
+      },
+      "QaVariables": {
+          "type": "object"
+      },
+      "Categories": {
+          "type": "object",
+          "title": "Category List",
+          "description": "A list of categories AdvancedCapture will prompt to choose from.",
+          "defaultSnippets": [
+              {
+                  "body": {
+                      "${1:CategoryName}": "^{$2}"
+                  }
+              }
+          ],
+          "additionalProperties": {
+              "type": "object",
+              "properties": {
+                  "icon": {
+                      "type": "string",
+                      "title": "Category Icon",
+                      "description": "The category icon or emoji used everywhere except CSV export. Disabled by default."
+                  },
+                  "iconExport": {
+                      "$ref": "#/definitions/ConfigExportable"
+                  },
+                  "enableComment": {
+                      "type": "boolean",
+                      "title": "Enable Comment Prompt",
+                      "description": "Whether AdvancedCapture should ask for a comment at the end of a capture. False by default.",
+                      "defaultSnippets": [
+                          {
+                              "body": "^${1|true,false|}"
+                          }
+                      ]
+                  },
+                  "commentExport": {
+                      "$ref": "#/definitions/ConfigExportable"
+                  },
+                  "todo": {
+                      "type": "boolean",
+                      "title": "As Todo",
+                      "description": "Whether to format this category as a todo. Disabled by default.",
+                      "defaultSnippets": [
+                          {
+                              "body": "^${1|true,false|}"
+                          }
+                      ]
+                  },
+                  "fields": {
+                      "type": "array",
+                      "title": "List of Fields",
+                      "description": "The list of fields to prompt, in order they should be collected and exported. Disabled by default.",
+                      "items": {
+                          "$ref": "#/definitions/Fieldable"
+                      }
+                  }
+              },
+              "additionalProperties": false
+          }
+      },
+      "ConfigExportable": {
+          "type": "object",
+          "title": "Export",
+          "description": "How AdvancedCapture should prepare this field for export. Inactive by default.",
+          "properties": {
+              "csv": {
+                  "type": "object",
+                  "title": "CSV Export",
+                  "description": "Attributes for CSV export. Empty by default.",
+                  "properties": {
+                      "include": {
+                          "type": "boolean",
+                          "title": "Include in CSV Export",
+                          "description": "Whether to include this field in the CSV export. False by default.",
+                          "defaultSnippets": [
+                              {
+                                  "body": "^${1|true,false|}"
+                              }
+                          ]
+                      },
+                      "keyPrefix": {
+                          "type": "string",
+                          "title": "Key Prefix",
+                          "description": "Prefix for this field's key (column) in CSV export. Only used when creating a CSV file for the first time. Disabled by default."
+                      },
+                      "keySuffix": {
+                          "type": "string",
+                          "title": "Key Suffix",
+                          "description": "Suffix for this field's key (column) in CSV export. Only used when creating a CSV file for the first time. Disabled by default."
+                      },
+                      "valuePrefix": {
+                          "type": "string",
+                          "title": "Value Prefix",
+                          "description": "Prefix for this field's value (cell in row) in CSV export. Disabled by default."
+                      },
+                      "valueSuffix": {
+                          "type": "string",
+                          "title": "Value Suffix",
+                          "description": "Suffix for this field's value (cell in row) in CSV export. Disabled by default."
+                      }
+                  },
+                  "additionalProperties": false
+              },
+              "print": {
+                  "type": "object",
+                  "properties": {
+                      "include": {
+                          "type": "boolean",
+                          "title": "Include in Notes Export",
+                          "description": "Whether to include this field when exporting to notes. False by default.",
+                          "defaultSnippets": [
+                              {
+                                  "body": "^${1|true,false|}"
+                              }
+                          ]
+                      },
+                      "prefix": {
+                          "type": "string",
+                          "title": "Prefix",
+                          "description": "The prefix concatenated at the start of this field's input. Applied before styles and links. Disabled by default."
+                      },
+                      "suffix": {
+                          "type": "string",
+                          "title": "Suffix",
+                          "description": "The suffix concatenated at the end of this field's input. Applied before styles and links. Disabled by default."
+                      },
+                      "separator": {
+                          "type": "string",
+                          "title": "Separator",
+                          "description": "The separator added between this field and the previous field, if there is one. Note that setting this to an empty string will set the two fields together without any spacing. \" - \" by default."
+                      },
+                      "internalLink": {
+                          "type": "boolean",
+                          "title": "As Internal Link",
+                          "description": "Whether to format this field as an internal link. Applied before styles but after pre/suffix. Disabled by default.",
+                          "defaultSnippets": [
+                              {
+                                  "body": "^${1|true,false|}"
+                              }
+                          ]
+                      },
+                      "externalLink": {
+                          "type": "string",
+                          "title": "As External Link",
+                          "description": "Setting this to a URL will format this field as an external link. Disabled by default."
+                      },
+                      "style": {
+                          "type": "object",
+                          "title": "Formatting Style",
+                          "description": "Markdown formatting style for this field. All styles are applied after links and pre/suffix. Disabled by default.",
+                          "properties": {
+                              "bold": {
+                                  "type": "boolean",
+                                  "title": "Bold",
+                                  "description": "Whether to apply bold formatting to this field. Disabled by default.",
+                                  "defaultSnippets": [
+                                      {
+                                          "body": "^${1|true,false|}"
+                                      }
+                                  ]
+                              },
+                              "italics": {
+                                  "type": "boolean",
+                                  "title": "Italics",
+                                  "description": "Whether to apply italics formatting to this field. Disabled by default.",
+                                  "defaultSnippets": [
+                                      {
+                                          "body": "^${1|true,false|}"
+                                      }
+                                  ]
+                              },
+                              "strikethrough": {
+                                  "type": "boolean",
+                                  "title": "Strikethrough",
+                                  "description": "Whether to apply strikethrough formatting to this field. Disabled by default.",
+                                  "defaultSnippets": [
+                                      {
+                                          "body": "^${1|true,false|}"
+                                      }
+                                  ]
+                              },
+                              "highlight": {
+                                  "type": "boolean",
+                                  "title": "Highlight",
+                                  "description": "Whether to apply highlight formatting to this field. Disabled by default.",
+                                  "defaultSnippets": [
+                                      {
+                                          "body": "^${1|true,false|}"
+                                      }
+                                  ]
+                              },
+                              "code": {
+                                  "type": "boolean",
+                                  "title": "Code",
+                                  "description": "Whether to apply code formatting to this field. Disabled by default.",
+                                  "defaultSnippets": [
+                                      {
+                                          "body": "^${1|true,false|}"
+                                      }
+                                  ]
+                              }
+                          },
+                          "additionalProperties": false
+                      }
+                  },
+                  "additionalProperties": false
+              }
+          },
+          "additionalProperties": false
+      },
+      "Fieldable": {
+          "type": "object",
+          "properties": {
+              "name": {
+                  "type": "string",
+                  "title": "Field Name",
+                  "description": "The name of this field. Used primarily by CSV export. Required.",
+                  "defaultSnippets": [
+                      {
+                          "body": "${1:Field Name}"
+                      }
+                  ]
+              },
+              "prompt": {
+                  "type": "string",
+                  "title": "Field Prompt",
+                  "description": "The type of prompt to capture this field. Required.",
+                  "enum": [
+                      "inputPrompt",
+                      "suggester",
+                      "wideInputPrompt",
+                      "yesNoPrompt"
+                  ]
+              },
+              "listPath": {
+                  "type": "string",
+                  "title": "Field List Path",
+                  "description": "The path to the file containing a list of items used by the suggester prompt. Required if suggester is used."
+              },
+              "required": {
+                  "type": "boolean",
+                  "title": "Required Field",
+                  "description": "Whether this field is required. False by default.",
+                  "defaultSnippets": [
+                      {
+                          "body": "^${1|true,false|}"
+                      }
+                  ]
+              },
+              "hasIcons": {
+                  "type": "boolean",
+                  "title": "Has Icons",
+                  "description": "Whether this field has icons. Only used with the suggester prompt. False by default.",
+                  "defaultSnippets": [
+                      {
+                          "body": "^${1|true,false|}"
+                      }
+                  ]
+              },
+              "export": {
+                  "$ref": "#/definitions/ConfigExportable"
+              }
+          },
+          "required": [
+              "name"
+          ],
+          "additionalProperties": false
+      }
+  }
+}

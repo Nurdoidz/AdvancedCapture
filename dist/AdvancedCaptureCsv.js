@@ -1,208 +1,44 @@
-const CONFIG_PATH = 'Path to configuration file';
+const CSV_PATH = 'Path to CSV file';
 module.exports = {
-    entry: capture,
+    entry: csv,
     settings: {
-        name: 'AdvancedCapture',
+        name: 'AdvancedCaptureCSV',
         author: 'Nurdoidz',
         options: {
-            [CONFIG_PATH]: {
+            [CSV_PATH]: {
                 type: 'text',
-                defaultValue: 'Scripts/QuickAdd/AdvancedCapture/Config.json',
-                placeholder: 'path/to/config.json'
+                defaultValue: 'Scripts/QuickAdd/AdvancedCapture/Export.csv',
+                placeholder: 'path/to/export.csv'
             }
         }
     }
 };
-let Obsidian;
-let QuickAdd;
-async function capture(quickAdd, settings) {
+async function csv(quickAdd, settings) {
     info('Starting');
-    Obsidian = quickAdd.app;
-    QuickAdd = quickAdd.quickAddApi;
-    const config = await getConfig(new Path(replaceInString(quickAdd.variables, settings[CONFIG_PATH])));
-    quickAdd.variables = Object.assign(config.variables, quickAdd.variables);
+    const Obsidian = quickAdd.app;
     const variables = quickAdd.variables;
-    variables.date = QuickAdd.date.now(config.dateExport?.csv?.format);
-    variables.time = QuickAdd.date.now(config.timeExport?.csv?.format);
-    const input = new Input();
-    input.add(variables.date, config.dateExport, 'Date');
-    input.add(variables.time, config.timeExport, 'Time');
-    const categoryName = await promptCategory(config.categories, variables);
-    if (!categoryName || !config.categories) {
-        info('Stopping');
-        return;
+    if (!('csvKeyExport' in variables) || !('csvValueExport' in variables)) {
+        throw new Error('Missing csvExport in global variables');
     }
-    variables.categoryName = categoryName;
-    const category = config.categories[categoryName];
-    variables.categoryIcon = category.icon;
-    variables.categoryFullName = `${category.icon ? `${category.icon} ` : ''}${categoryName}`;
-    input.add(category?.icon ?? '', category.iconExport, 'Icon');
-    variables.todo = category.todo === true ? '- [ ] ' : '';
-    for (let i = 0; i < (category.fields?.length ?? 0); i++) {
-        input.addField(await promptField(category.fields[i], variables));
-    }
-    if (category.enableComment === true) {
-        input.addField(await promptComment(variables, category.commentExport));
-    }
-    variables.input = input;
-    variables.markdownExport = input.getMarkdownExport();
-    variables.csvKeyExport = input.getCsvKeyExport();
-    variables.csvValueExport = input.getCsvValueExport();
-    Object.assign(quickAdd.variables, variables);
-    info('Stored input in QuickAdd variables', { Variables: variables });
-    info('Stopping');
-}
-async function getConfig(path) {
-    info('Looking for config file', { Path: path });
-    if (!path.isFile('json'))
-        throw new Error('Path to config is not a json file');
+    const path = new Path(replaceInString(variables, settings[CSV_PATH]));
+    if (!path.isFile())
+        throw new Error('Path is not a file');
     let file = Obsidian.vault.getAbstractFileByPath(path);
     if (!file) {
-        warn('No config found', { Path: path });
-        info('Creating sample config', { Path: path });
+        warn('CSV file not found; trying to create', { Path: path });
         await ensureFolderExists(path, Obsidian.vault);
-        const sample = new SampleConfig();
-        file = await Obsidian.vault.create(path, JSON.stringify(sample, null, 4));
-        if (!file)
-            throw new Error('Failed to create sample config');
-        info('Created sample config', { Path: path, Config: sample });
+        file = await Obsidian.vault.create(path, `${variables.csvKeyExport}\n${variables.csvValueExport}\n`);
+        info('CSV file successfully created with export', { Path: path, Header: variables.csvKeyExport, Row: variables.csvValueExport });
     }
-    info('Config found', { Path: path });
-    info('Reading config', { Path: path });
-    const content = await Obsidian.vault.read(file);
-    return new DefaultConfig(parseJsonToConfig(content));
-}
-async function promptCategory(cats, vars) {
-    if (!cats) {
-        warn('No categories found');
-        return undefined;
+    else {
+        let contents = await Obsidian.vault.read(file);
+        if (!contents.endsWith('\n'))
+            contents += '\n';
+        contents += `${variables.csvValueExport}\n`;
+        Obsidian.vault.modify(file, contents);
+        info('CSV file successfully updated with export', { Path: path, Row: variables.csvValueExport });
     }
-    if (Object.keys(cats).length === 0) {
-        warn('No categories found');
-        return undefined;
-    }
-    const categories = { ...cats };
-    Object.keys(categories).forEach(cat => {
-        categories[cat].icon = replaceInString(vars, categories[cat].icon);
-    });
-    const display = Object.keys(categories);
-    const actual = [...display];
-    display.forEach((item, i, l) => {
-        if (categories[item].icon)
-            l[i] = `${categories[item].icon} ${item}`;
-    });
-    info('Prompting for category', { List: display });
-    return await QuickAdd.suggester(display, actual);
-}
-async function promptField(field, vars) {
-    field = Object.assign(new Fields(), field);
-    field = replaceRecursively(vars, field);
-    field.name = field.name.replace(/[,]/g, '');
-    let input;
-    let file;
-    let path;
-    info('Prompting for input', { Field: field });
-    switch (field.prompt) {
-        case 'wideInputPrompt':
-        case 'inputPrompt':
-            if (field.prompt === 'wideInputPrompt')
-                input = await QuickAdd.wideInputPrompt(field.name);
-            else
-                input = await QuickAdd.inputPrompt(field.name);
-            input = replaceInString(vars, input);
-            if (!input) {
-                if (field.required === true)
-                    throw new Error('No input received for required field');
-                input = '';
-            }
-            break;
-        case 'yesNoPrompt':
-            input = await QuickAdd.yesNoPrompt(field.name);
-            if (typeof input !== 'boolean') {
-                if (field.required === true)
-                    throw new Error('No input received for required field');
-                input = 'false';
-            }
-            input = input.toString();
-            break;
-        case 'suggester':
-            path = new Path(replaceInString(vars, field.listPath));
-            file = Obsidian.vault.getAbstractFileByPath(path);
-            if (!file) {
-                info('File for list not found; trying to create', { Path: path, Field: field.name });
-                await ensureFolderExists(path, Obsidian.vault);
-                file = await Obsidian.vault.create(path, '');
-                if (!file) {
-                    error('Failed to create file for list', { Path: path, Field: field.name });
-                    if (field.required === true) {
-                        throw new Error('Could not create file for list for required field');
-                    }
-                    input = '';
-                    break;
-                }
-                info('Created file for list', { Path: path, Field: field.name });
-            }
-            do {
-                let content = (await Obsidian.vault.read(file)).trim();
-                const display = [];
-                if (content.length > 0) {
-                    content.split('\n').forEach((line) => {
-                        display.push(replaceInString(vars, line));
-                    });
-                }
-                content += '\n';
-                display.push('✨ Add');
-                const actual = display.slice(0, -1);
-                actual.push('!add');
-                input = await QuickAdd.suggester(display, actual);
-                input = replaceInString(vars, input);
-                if (!input) {
-                    if (field.required === true) {
-                        throw new Error('No input received for required field');
-                    }
-                    input = '';
-                }
-                if (input === '!add') {
-                    info('Prompting for new item in list', { Path: field.listPath, Field: field.name });
-                    let icon;
-                    if (field.hasIcons === true) {
-                        icon = await QuickAdd.inputPrompt(`Icon for new ${field.name}`);
-                        if (icon)
-                            icon = icon.replace(/\s/g, '');
-                        if (!icon)
-                            warn('Invalid icon', { Icon: icon });
-                    }
-                    if (field.hasIcons === !!icon) {
-                        const name = (await QuickAdd.inputPrompt(`Name for new ${field.name}`)).trim();
-                        if (name) {
-                            content += `${(icon ? `${icon} ` : '') + name}\n`;
-                            Obsidian.vault.modify(file, content);
-                            info('Added new item', { Path: field.listPath, Icon: icon, Name: name });
-                        }
-                        else
-                            warn('Invalid item name', { Name: name });
-                    }
-                }
-            } while (input === '!add');
-            if (!input) {
-                if (field.required === true)
-                    throw new Error('No input received for required field');
-                input = '';
-            }
-            break;
-        default:
-            error('Unsupported prompt type', { Prompt: field.prompt, Field: field.name });
-            throw new Error('Unsupported prompt type');
-    }
-    if (input)
-        info('Captured input for field', { Field: field.name, Input: input });
-    else
-        info('No input captured for field', { Field: field.name });
-    return new Field(input, field.export, field.name);
-}
-async function promptComment(vars, config) {
-    info('Prompting for comment');
-    return new Field(replaceInString(vars, await QuickAdd.inputPrompt('Comment')), config, 'Comment');
+    info('Stopping');
 }
 
 async function ensureFolderExists(path, vault) {

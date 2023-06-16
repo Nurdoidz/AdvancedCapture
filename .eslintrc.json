@@ -41,7 +41,7 @@
     "camelcase": "warn",
     "curly": [
       "error",
-      "multi"
+      "multi-line"
     ],
     "eqeqeq": "error",
     "max-params": [
@@ -79,7 +79,7 @@
     "func-call-spacing": "error",
     "key-spacing": "error",
     "keyword-spacing": "error",
-    "max-len": ["error", { "code": 120, "tabWidth": 4 }],
+    "max-len": ["error", { "code": 100, "tabWidth": 4 }],
     "no-multi-spaces": "error",
     "no-trailing-spaces": "error",
     "no-whitespace-before-property": "error",

@@ -6,12 +6,15 @@
  *
  * ------------------------------------------------------------------------- */
 
+import { replaceInString, Path, Input, info, Config, ensureFolderExists, warn,
+    SampleConfig, parseJsonToConfig, Categories, QaVariables, Field, Fields,
+    replaceRecursively, error, DefaultConfig, Fieldable, ConfigExportable } from 'Common';
+
 const CONFIG_PATH = 'Path to configuration file';
-const DATE_FORMAT = 'Date format';
-const TIME_FORMAT = 'Time format';
 
 module.exports = {
-    entry: main,
+
+    entry: capture,
     settings: {
         name: 'AdvancedCapture',
         author: 'Nurdoidz',
@@ -20,553 +23,220 @@ module.exports = {
                 type: 'text',
                 defaultValue: 'Scripts/QuickAdd/AdvancedCapture/Config.json',
                 placeholder: 'path/to/config.json'
-            },
-            [DATE_FORMAT]: {
-                type: 'text',
-                defaultValue: 'YYYY-MM-DD',
-                placeholder: 'YYYY-MM-DD'
-            },
-            [TIME_FORMAT]: {
-                type: 'text',
-                defaultValue: 'HH:mm:ss',
-                placeholder: 'HH:mm:ss'
-            },
-            'Debug': {
-                type: 'checkbox',
-                defaultValue: false
             }
         }
     }
 };
 
-let Settings: any;
-let QuickAdd: any;
 let Obsidian: any;
-const Variables: StringReplaceable = {
-    replaceInString: function(str: string): string {
+let QuickAdd: any;
 
-        let result = str;
-        const reMatchVar = RegExp(/var\(--(\w+?)\)/);
-        if (reMatchVar.test(result)) {
-            const match = result.match(reMatchVar)![0]
-                .replace(reMatchVar, '$1');
-            if (match in this) result = result.replace(reMatchVar, this[match]);
-            else result = result.replace(reMatchVar, '');
+async function capture(quickAdd: any, settings: any): Promise<void> {
 
-            if (reMatchVar.test(result)) result = this.replaceInString(result);
-        }
-        return result;
-    },
-    fullReplace(obj: any): any {
+    info('Starting');
 
-        return applyRecursive(obj, (o) => {
-            o = this.replaceInString(o);
-            return replaceStringWithBoolean(o);
-        });
-    }
-};
-interface StringReplaceable {
-    replaceInString(str: string): string
-    fullReplace(obj: any): any
-    [key: string]: any
-}
-export { Variables };
-
-async function main(quickAdd: any, settings: any): Promise<void> {
-
-    Settings = settings;
-    QuickAdd = quickAdd.quickAddApi;
     Obsidian = quickAdd.app;
-    Object.assign(Variables, quickAdd.variables);
-    info('!Starting');
+    QuickAdd = quickAdd.quickAddApi;
 
-    if (!await readConfig()) {
-        error('Failed to read config file');
-        return;
-    }
-    if (!('config' in Variables)) {
-        info('!Stopping');
-        return;
-    }
-    info('Read config OK');
+    const config = await getConfig(
+        new Path(replaceInString(quickAdd.variables, settings[CONFIG_PATH])));
+    quickAdd.variables = Object.assign(<object>config.variables, quickAdd.variables);
+    const variables = quickAdd.variables;
+
+    variables.date = QuickAdd.date.now(config.dateExport?.csv?.format);
+    variables.time = QuickAdd.date.now(config.timeExport?.csv?.format);
     const input = new Input();
-    stampDateTime(input);
+    input.add(variables.date, config.dateExport, 'Date');
+    input.add(variables.time, config.timeExport, 'Time');
 
-    info('!Stopping');
+    const categoryName = await promptCategory(config.categories, variables);
+    if (!categoryName || !config.categories) {
+        info('Stopping');
+        return;
+    }
+    variables.categoryName = categoryName;
+    const category = config.categories[categoryName];
+    variables.categoryIcon = category.icon;
+    variables.categoryFullName = `${category.icon ? `${category.icon} ` : ''}${categoryName}`;
+    input.add(category?.icon ?? '', category.iconExport, 'Icon');
+    variables.todo = category.todo === true ? '- [ ] ' : '';
+
+    for (let i = 0; i < (category.fields?.length ?? 0); i++) {
+        input.addField(await promptField(category.fields![i], variables));
+    }
+    if (category.enableComment === true) {
+        input.addField(await promptComment(variables, category.commentExport));
+    }
+
+    variables.input = input;
+    variables.markdownExport = input.getMarkdownExport();
+    variables.csvKeyExport = input.getCsvKeyExport();
+    variables.csvValueExport = input.getCsvValueExport();
+    Object.assign(quickAdd.variables, variables);
+    info('Stored input in QuickAdd variables', { Variables: variables });
+
+    info('Stopping');
 }
 
-async function readConfig(): Promise<boolean> {
+async function getConfig(path: Path): Promise<Config> {
 
-    info('!Reading config', { Path: Settings[CONFIG_PATH] });
-
-    const path = new Path(Variables.replaceInString(Settings[CONFIG_PATH]));
-    if (!path.isFile('json')) {
-        error('Invalid config path', { Path: path });
-        return false;
-    }
+    info('Looking for config file', { Path: path });
+    if (!path.isFile('json')) throw new Error('Path to config is not a json file');
 
     let file = Obsidian.vault.getAbstractFileByPath(path);
     if (!file) {
         warn('No config found', { Path: path });
-        info('!Creating config', { Path: path });
-        await ensureFolderExists(path);
-        file = await Obsidian.vault.create(path, '');
-        if (!file) {
-            error('Failed to create config', { Path: path });
-            return false;
-        }
+        info('Creating sample config', { Path: path });
+        await ensureFolderExists(path, Obsidian.vault);
+        const sample = new SampleConfig();
+        file = await Obsidian.vault.create(path, JSON.stringify(sample, null, 4));
+        if (!file) throw new Error('Failed to create sample config');
+        info('Created sample config', { Path: path, Config: sample });
     }
+    info('Config found', { Path: path });
 
+    info('Reading config', { Path: path });
     const content = await Obsidian.vault.read(file);
-    const config = tryParseJsonObject(content);
-    if (!config) if (!content.trim()) {
-        if (await QuickAdd.yesNoPrompt(`No config found. Want to create a sample at '${path}'?`)) {
-            Obsidian.vault.modify(file, JSON.stringify(getSampleConfig(), null, 2));
-            info('!Created config', { Path: path });
-        }
-    }
-    else {
-        error('Could not parse config', { Path: path });
-        return false;
-    }
 
-    if (config) Variables.config = config;
-    return true;
+    return new DefaultConfig(parseJsonToConfig(content));
 }
 
-function stampDateTime(input: Input): void {
+// eslint-disable-next-line max-len
+async function promptCategory(cats: Categories | undefined, vars: QaVariables): Promise<string | undefined> {
 
-    input.addField(new DateTimeField(Variables.config.date));
-    input.addField(new DateTimeField(Variables.config.time));
-}
-
-async function ensureFolderExists(path: Path): Promise<void> {
-
-    if (!path.hasFolder()) return;
-    if (!Obsidian.vault.getAbstractFileByPath(path.getFolder)) await Obsidian.vault.createFolder(path.getFolder);
-}
-
-export function tryParseJsonObject(jsonString: string): object | undefined {
-
-    try {
-        const obj = JSON.parse(jsonString);
-        if (obj && typeof obj === 'object') return obj;
-    }
-    catch (e) {
+    if (!cats) {
+        warn('No categories found');
         return undefined;
     }
+    if (Object.keys(cats).length === 0) {
+        warn('No categories found');
+        return undefined;
+    }
+    const categories = { ...cats };
+
+    Object.keys(categories).forEach(cat => {
+        categories[cat].icon = replaceInString(vars, categories[cat].icon);
+    });
+
+    const display = Object.keys(categories);
+    const actual = [...display];
+    display.forEach((item, i, l) => {
+        if (categories[item].icon) l[i] = `${categories[item].icon} ${item}`;
+    });
+    info('Prompting for category', { List: display });
+    return await QuickAdd.suggester(display, actual);
 }
 
-export function getSampleConfig(): object {
+async function promptField(field: Fieldable, vars: QaVariables): Promise<Field | undefined> {
 
-    return {
-        'categories': {
-            'Exercise': {
-                'icon': '🏊‍♂️',
-                'fields': [
-                    {
-                        'name': 'Activity',
-                        'prompt': 'suggester',
-                        'listPath': 'Journal/Exercise Activities.md',
-                        'format': 'italics',
-                        'hasIcons': true,
-                        'write': true
-                    },
-                    {
-                        'name': 'Rating',
-                        'prompt': 'inputPrompt',
-                        'format': 'bold',
-                        'dataView': 'rating',
-                        'suffix': '/10',
-                        'write': true
+    field = Object.assign(new Fields(), field);
+    field = replaceRecursively(vars, field);
+    field.name = field.name.replace(/[,]/g, '');
+
+    let input: string;
+    let file;
+    let path;
+    info('Prompting for input', { Field: field });
+    switch (field.prompt) {
+    case 'wideInputPrompt':
+    case 'inputPrompt': // TODO: Add '(Required)' to prompt
+        if (field.prompt === 'wideInputPrompt') input = await QuickAdd.wideInputPrompt(field.name);
+        else input = await QuickAdd.inputPrompt(field.name);
+        input = replaceInString(vars, input);
+        if (!input) {
+            if (field.required === true) throw new Error('No input received for required field');
+            input = '';
+        }
+        break;
+    case 'yesNoPrompt':
+        input = await QuickAdd.yesNoPrompt(field.name);
+        if (typeof input !== 'boolean') {
+            if (field.required === true) throw new Error('No input received for required field');
+            input = 'false';
+        }
+        input = input.toString();
+        break;
+    case 'suggester':
+        path = new Path(replaceInString(vars, field.listPath));
+        file = Obsidian.vault.getAbstractFileByPath(path);
+        if (!file) {
+            info('File for list not found; trying to create',
+                { Path: path, Field: field.name });
+            await ensureFolderExists(path, Obsidian.vault);
+            file = await Obsidian.vault.create(path, '');
+            if (!file) {
+                error('Failed to create file for list',
+                    { Path: path, Field: field.name });
+                if (field.required === true) {
+                    throw new Error('Could not create file for list for required field');
+                }
+                input = '';
+                break;
+            }
+            info('Created file for list', { Path: path, Field: field.name });
+        }
+        do {
+            let content = (await Obsidian.vault.read(file)).trim();
+            const display = [];
+            if (content.length > 0) {
+                content.split('\n').forEach((line: string) => {
+                    display.push(replaceInString(vars, line));
+                });
+            }
+            content += '\n';
+            display.push('✨ Add');
+            const actual = display.slice(0, -1);
+            actual.push('!add');
+
+            input = await QuickAdd.suggester(display, actual);
+            input = replaceInString(vars, input);
+            if (!input) {
+                if (field.required === true) {
+                    throw new Error('No input received for required field');
+                }
+                input = '';
+            }
+            if (input === '!add') {
+                info('Prompting for new item in list', { Path: field.listPath, Field: field.name });
+                let icon;
+                if (field.hasIcons === true) {
+                    icon = await QuickAdd.inputPrompt(`Icon for new ${field.name}`);
+                    if (icon) icon = icon.replace(/\s/g, '');
+                    if (!icon) warn('Invalid icon', { Icon: icon });
+                }
+                if (field.hasIcons === !!icon) {
+                    const name = (await QuickAdd.inputPrompt(`Name for new ${field.name}`)).trim();
+                    if (name) {
+                        content += `${(icon ? `${icon} ` : '') + name}\n`;
+                        Obsidian.vault.modify(file, content);
+                        info('Added new item', { Path: field.listPath, Icon: icon, Name: name });
                     }
-                ]
-
+                    else warn('Invalid item name', { Name: name });
+                }
             }
         }
-    };
-}
+        while (input === '!add');
 
-class Input {
-
-    private fields: Field[] = [];
-
-    add(input: string, config: FieldConfig) {
-
-        this.fields.push(new Field(input, config));
-    }
-
-    addField(field: Field) {
-
-        this.fields.push(field);
-    }
-
-}
-
-class Field implements Printable, Exportable {
-
-    protected input: string;
-    protected config: FieldConfig;
-
-    constructor(input: string, config: FieldConfig) {
-
-        this.input = input;
-        this.config = Variables.fullReplace(config);
-    }
-
-    getSeparator(): string {
-
-        return Variables.replaceInString(this.config.print.separator);
-    }
-
-    getPrintString(): string {
-
-        if (!this.config.print.include) return '';
-        let result = this.input;
-        result = `${this.config.print.prefix}${result}${this.config.print.suffix}`;
-        if (this.config.print.internalLink) result = `[[${result}]]`;
-        else if (this.config.print.externalLink) result = `[${result}](${this.config.print.externalLink})`;
-        return Style.applyStyle(result, new Style(this.config.print.style));
-    }
-
-    getFieldKey(): string {
-
-        if (!this.config.row.include) return '';
-        return `${this.config.row.keyPrefix}${this.input}${this.config.row.keySuffix}`;
-    }
-
-    getFieldValue(): string {
-
-        if (!this.config.row.include) return '';
-        return `${this.config.row.valuePrefix}${this.input}${this.config.row.valueSuffix}`;
-    }
-}
-
-class DateTimeField extends Field {
-
-    constructor(config: DateTimeFieldConfig) {
-
-        super('', config);
-    }
-
-    override getPrintString(): string {
-
-        this.input = QuickAdd.date.now(this.config.print.format);
-        return super.getPrintString();
-    }
-
-    override getFieldValue(): string {
-
-        this.input = QuickAdd.date.now(this.config.row.format);
-        return super.getFieldValue();
-    }
-}
-
-class FieldConfig {
-
-    row: { [key: string]: any } = {
-        'include': false,
-        'keyPrefix': '',
-        'keySuffix': '',
-        'valuePrefix': '',
-        'valueSuffix': ''
-    };
-    print: { [key: string]: any } = {
-        'include': false,
-        'prefix': '',
-        'suffix': '',
-        'separator': ' - ',
-        'internalLink': false,
-        'externalLink': '',
-        'style': {
-            'bold': false,
-            'italics': false,
-            'strikethrough': false,
-            'highlight': false
+        if (!input) {
+            if (field.required === true) throw new Error('No input received for required field');
+            input = '';
         }
-    };
-
-    constructor(row?: object, print?: object) {
-
-        if (row) Object.assign(this.row, row);
-        if (print) Object.assign(this.print, print);
+        break;
+    default:
+        error('Unsupported prompt type', { Prompt: field.prompt, Field: field.name });
+        throw new Error('Unsupported prompt type');
     }
+
+    if (input) info('Captured input for field', { Field: field.name, Input: input });
+    else info('No input captured for field', { Field: field.name });
+
+    return new Field(input, field.export, field.name);
 }
 
-class DateTimeFieldConfig extends FieldConfig {
+async function promptComment(
+    vars: QaVariables, config: ConfigExportable | undefined): Promise<Field> {
 
-    private constructor(defaultFormat: string, row?: object, print?: object) {
-
-        super(row, print);
-        if (row) if ('format' in row) this.row.format = row.format;
-        else this.row.format = defaultFormat;
-
-        if (print) if ('format' in print) this.print.format = print.format;
-        else this.print.format = defaultFormat;
-    }
-
-    newDate(row?: object, print?: object): DateTimeFieldConfig {
-
-        return new DateTimeFieldConfig('YYYY-MM-DD', row, print);
-    }
-
-    newTime(row?: object, print?: object): DateTimeFieldConfig {
-
-        return new DateTimeFieldConfig('HH:mm:ss', row, print);
-    }
-
+    info('Prompting for comment');
+    return new Field(
+        replaceInString(vars, await QuickAdd.inputPrompt('Comment')), config, 'Comment');
 }
-
-interface Printable {
-
-    getSeparator(): string;
-    getPrintString(): string;
-}
-
-interface Exportable {
-
-    getFieldKey(): string;
-    getFieldValue(): string;
-}
-
-export class Style {
-
-    bold = false;
-    italics = false;
-    strikethrough = false;
-    highlight = false;
-    code = false;
-
-    constructor(obj?: object) {
-
-        if (obj) Object.assign(this, obj);
-    }
-
-    withBold(): Style {
-
-        this.bold = true;
-        return this;
-    }
-
-    withItalics(): Style {
-
-        this.italics = true;
-        return this;
-    }
-
-    withStrikethrough(): Style {
-
-        this.strikethrough = true;
-        return this;
-    }
-
-    withHighlight(): Style {
-
-        this.highlight = true;
-        return this;
-    }
-
-    withCode(): Style {
-
-        this.code = true;
-        return this;
-    }
-
-    apply(str: string): string {
-
-        let result = str;
-        if (this.bold) result = `**${result}**`;
-        if (this.italics) result = `_${result}_`;
-        if (this.strikethrough) result = `~~${result}~~`;
-        if (this.highlight) result = `==${result}==`;
-        if (this.code) result = `\`${result}\``;
-        return result;
-    }
-
-    static applyStyle(str: string, style: Style): string {
-
-        return style.apply(str);
-    }
-}
-
-export function replaceStringWithBoolean(str: string): string | boolean {
-
-    if (str === 'false') return false;
-    if (str === 'true') return true;
-    return str;
-}
-
-export function applyRecursive(obj: any, func: (arg: any) => any): any {
-
-    if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean') return func(obj);
-    else if (Array.isArray(obj)) return obj.map((item) => applyRecursive(item, func));
-    else if (typeof obj === 'object' && obj !== null) {
-        const newObj: any = {};
-        for (const key in obj) newObj[key] = applyRecursive(obj[key], func);
-        return newObj;
-    }
-    return obj;
-}
-
-export class Path {
-
-    private folder: string;
-    private basename: string;
-    private extension: string;
-    isRootFolder: boolean;
-    private reMatchFile = RegExp(/([^/]+)\.(\w+)$/);
-
-    constructor(path: string) {
-
-        path = this.trimPath(path);
-        this.folder = this.extractFolder(path);
-        this.basename = this.extractBasename(path);
-        this.extension = this.extractExtension(path);
-        this.isRootFolder = !this.folder && !this.basename && !this.extension;
-    }
-
-    private trimPath(path: string): string {
-
-        return path.trim()
-            .replace(/[\n\r]/g, '')
-            .replace(/\/{2,}/g, '/')
-            .replace(/^\//, '')
-            .replace(/^\/(.+)/g, '$1');
-    }
-
-    private extractFolder(path: string): string {
-
-        if (path === '') return '';
-        if (path.includes('/')) {
-            if (path.endsWith('/')) return path.substring(0, path.length - 1);
-            if (this.reMatchFile.test(path)) return path.split('/').slice(0, -1).join('/');
-            return path;
-        }
-        if (!this.reMatchFile.test(path)) return path;
-        return '';
-    }
-
-    private extractBasename(path: string): string {
-
-        if (path === '') return '';
-        if (this.reMatchFile.test(path)) return path.match(this.reMatchFile)![1];
-        return '';
-    }
-
-    private extractExtension(path: string): string {
-
-        if (path === '') return '';
-        if (this.reMatchFile.test(path)) return path.match(this.reMatchFile)![2];
-        return '';
-    }
-
-    isFile(ext: string): boolean {
-
-        return this.extension === ext.trim();
-    }
-
-    isFolder(): boolean {
-
-        if (this.isRootFolder) return true;
-        return this.folder !== '' && this.basename === '';
-    }
-
-    getFolder(): string {
-
-        return this.folder;
-    }
-
-    getFile(): string {
-
-        if (this.hasFile()) return `${this.basename}.${this.extension}`;
-        return '';
-    }
-
-    getBasename(): string {
-
-        return this.basename;
-    }
-
-    getExtension(): string {
-
-        return this.extension;
-    }
-
-    hasFolder(): boolean {
-
-        return this.folder !== '';
-    }
-
-    hasFile(): boolean {
-
-        return this.basename !== '' && this.extension !== '';
-    }
-
-    toString(): string {
-
-        return `${this.folder}${this.hasFolder() && this.hasFile() ? '/' : ''}${this.getFile()}`;
-    }
-}
-
-function info(message: string, obj?: object) {
-
-    if (message.startsWith('!')) message = message.substring(1);
-    else if (!Settings.Debug) return;
-
-    if (!obj) {
-        console.log(debug.prefix + message, ...debug.prefixColors);
-        return;
-    }
-    console.groupCollapsed(debug.prefix + message, colors.blue, colors.reset);
-    debugObj(obj);
-    console.groupEnd();
-}
-
-function error(message: string, obj?: object) {
-
-    if (!obj) {
-        console.error(debug.prefix + message, ...debug.prefixColors);
-        return;
-    }
-    console.groupCollapsed(debug.prefix + message, colors.blue, colors.red);
-    debugObj(obj);
-    console.groupEnd();
-}
-
-function warn(message: string, obj?: object) {
-
-    if (!obj) {
-        console.warn(debug.prefix + message, ...debug.prefixColors);
-        return;
-    }
-    console.groupCollapsed(debug.prefix + message, colors.blue, colors.orange);
-    debugObj(obj);
-    console.groupEnd();
-}
-
-function debugObj(obj: object) {
-
-    Object.keys(obj).forEach((key, i) => {
-        console.info(debug.object(key), ...debug.objectColors, Object.values(obj)[i]);
-    });
-}
-
-const colors = {
-    reset: 'color: inherit',
-    blue: 'color: #27C6F1',
-    pink: 'color: #D927F1',
-    red: 'color: #F12727',
-    orange: 'color: #F18C27'
-};
-
-const debug = {
-    prefix: '%c[AdvancedCapture]%c ',
-    object: (str: string) => `%c${str}:%c `,
-    prefixColors: [colors.blue, colors.reset],
-    objectColors: [colors.pink, colors.reset],
-    singleKey: (obj: object) => {
-        const [key, value] = Object.entries(obj)[0];
-        return `%c${key}:%c ${value}`;
-    },
-    singleKeyColors: [colors.pink, colors.reset]
-};
