@@ -33,7 +33,7 @@ let QuickAdd: any;
 
 async function capture(quickAdd: any, settings: any): Promise<void> {
 
-    info('Starting');
+    info('Starting capture');
 
     Obsidian = quickAdd.app;
     QuickAdd = quickAdd.quickAddApi;
@@ -59,7 +59,7 @@ async function capture(quickAdd: any, settings: any): Promise<void> {
     variables.categoryIcon = category.icon;
     variables.categoryFullName = `${category.icon ? `${category.icon} ` : ''}${categoryName}`;
     input.add(category?.icon ?? '', category.iconExport, 'Icon');
-    variables.todo = category.todo === true ? '- [ ] ' : '';
+    variables.todo = category.todo === true ? '- [ ] ' : ' ';
 
     for (let i = 0; i < (category.fields?.length ?? 0); i++) {
         input.addField(await promptField(category.fields![i], variables));
@@ -75,7 +75,7 @@ async function capture(quickAdd: any, settings: any): Promise<void> {
     Object.assign(quickAdd.variables, variables);
     info('Stored input in QuickAdd variables', { Variables: variables });
 
-    info('Stopping');
+    info('Stopping capture');
 }
 
 async function getConfig(path: Path): Promise<Config> {
@@ -89,7 +89,7 @@ async function getConfig(path: Path): Promise<Config> {
         info('Creating sample config', { Path: path });
         await ensureFolderExists(path, Obsidian.vault);
         const sample = new SampleConfig();
-        file = await Obsidian.vault.create(path, JSON.stringify(sample, null, 4));
+        file = await Obsidian.vault.create(path.toString(), JSON.stringify(sample, null, 4));
         if (!file) throw new Error('Failed to create sample config');
         info('Created sample config', { Path: path, Config: sample });
     }
@@ -163,7 +163,7 @@ async function promptField(field: Fieldable, vars: QaVariables): Promise<Field |
             info('File for list not found; trying to create',
                 { Path: path, Field: field.name });
             await ensureFolderExists(path, Obsidian.vault);
-            file = await Obsidian.vault.create(path, '');
+            file = await Obsidian.vault.create(path.toString(), '');
             if (!file) {
                 error('Failed to create file for list',
                     { Path: path, Field: field.name });
@@ -180,7 +180,7 @@ async function promptField(field: Fieldable, vars: QaVariables): Promise<Field |
             const display = [];
             if (content.length > 0) {
                 content.split('\n').forEach((line: string) => {
-                    display.push(replaceInString(vars, line));
+                    display.push(replaceInString(vars, line).trim());
                 });
             }
             content += '\n';

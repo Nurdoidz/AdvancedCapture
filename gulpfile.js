@@ -11,12 +11,13 @@ function capture() {
     return build('./src/Common.ts', './src/AdvancedCapture.ts', './dist');
 }
 
-function csv() {
-    return build('./src/Common.ts', './src/AdvancedCaptureCsv.ts', './dist');
+function csvExport() {
+    return build('./src/Common.ts', './src/AdvancedCSVExport.ts', './dist');
 }
 
-// gulp.task('build-capture', build('./src/Common.ts', './src/AdvancedCapture.ts', './dist'));
-// gulp.task('build-csv', build('./src/Common.ts', './src/AdvancedCaptureCsv.ts', './dist'));
+function noteExport() {
+    return build('./src/Common.ts', './src/AdvancedNoteExport.ts', './dist');
+}
 
 function build(common, source, outDir) {
     return src(source)
@@ -36,6 +37,5 @@ function build(common, source, outDir) {
         }));
 }
 
-exports.default = series(capture, csv);
+exports.default = series(capture, csvExport, noteExport);
 
-// gulp.task('default', gulp.series('build-capture'));

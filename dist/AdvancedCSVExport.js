@@ -14,7 +14,7 @@ module.exports = {
     }
 };
 async function csv(quickAdd, settings) {
-    info('Starting');
+    info('Starting CSV export');
     const Obsidian = quickAdd.app;
     const variables = quickAdd.variables;
     if (!('csvKeyExport' in variables) || !('csvValueExport' in variables)) {
@@ -27,7 +27,7 @@ async function csv(quickAdd, settings) {
     if (!file) {
         warn('CSV file not found; trying to create', { Path: path });
         await ensureFolderExists(path, Obsidian.vault);
-        file = await Obsidian.vault.create(path, `${variables.csvKeyExport}\n${variables.csvValueExport}\n`);
+        file = await Obsidian.vault.create(path.toString(), `${variables.csvKeyExport}\n${variables.csvValueExport}\n`);
         info('CSV file successfully created with export', { Path: path, Header: variables.csvKeyExport, Row: variables.csvValueExport });
     }
     else {
@@ -38,10 +38,11 @@ async function csv(quickAdd, settings) {
         Obsidian.vault.modify(file, contents);
         info('CSV file successfully updated with export', { Path: path, Row: variables.csvValueExport });
     }
-    info('Stopping');
+    info('Stopping CSV export');
 }
 
 async function ensureFolderExists(path, vault) {
+    info('Inside ensureFolderExists');
     if (!path.hasFolder())
         return;
     if (!vault.getAbstractFileByPath(path.getFolder())) {
@@ -206,7 +207,7 @@ async function ensureFolderExists(path, vault) {
     getCsvKeyExport() {
         return this.fields.map(field => {
             if (field.shouldIncludeCsv())
-                return field.getFieldKey();
+                return field.getFieldKey().replace(/,/, '');
             return null;
         }).filter(key => key).join(',');
     }
@@ -257,7 +258,7 @@ async function ensureFolderExists(path, vault) {
         return (this.config.csv?.include ?? false) === true;
     }
     hasInput() {
-        return this.getPrintString().length > 0;
+        return this.input.length > 0;
     }
 }class DefaultExportConfig {
     constructor(csv, print) {

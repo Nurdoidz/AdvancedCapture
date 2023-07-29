@@ -219,7 +219,7 @@ export class Input {
     getCsvKeyExport(): string {
 
         return this.fields.map(field => {
-            if (field.shouldIncludeCsv()) return field.getFieldKey();
+            if (field.shouldIncludeCsv()) return field.getFieldKey().replace(/,/, '');
             return null;
         }).filter(key => key).join(',');
     }
@@ -287,7 +287,7 @@ export class Field implements Printable, Exportable {
 
     hasInput(): boolean {
 
-        return this.getPrintString().length > 0;
+        return this.input.length > 0;
     }
 }
 

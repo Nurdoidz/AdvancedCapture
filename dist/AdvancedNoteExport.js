@@ -1,211 +1,227 @@
-const CONFIG_PATH = 'Path to configuration file';
+const NOTE_PATH = 'Path to note';
+const CREATE_NOTE = 'Create note if it doesn\'t exist';
+const TARGET = 'Target';
+const CUSTOM_VARIABLE = 'Custom capture variable';
+const FILE_INSERT_MODE = 'File insert mode';
+const FILE_PADDING = 'File padding';
+const SECTION_MATCH = 'Section match';
+const SECTION_MATCH_INDEX = 'Section match index';
+const CREATE_SECTION = 'Create section if it doesn\'t exist';
+const SECTION_INSERT_MODE = 'Section insert mode';
+const SECTION_PADDING = 'Section padding';
+const BLOCK_TYPE = 'Block type';
+const BLOCK_MATCH = 'Block match';
+const BLOCK_MATCH_INDEX = 'Block match index';
+const CREATE_CODE_BLOCK = 'Create code block if it doesn\'t exist';
+const BLOCK_INSERT_MODE = 'Block insert mode';
+const BLOCK_PADDING = 'Block padding';
+const LINE_MATCH = 'Line match';
+const LINE_MATCH_INDEX = 'Line match index';
+const LINE_INSERT_MODE = 'Line insert mode';
+const LINE_PADDING = 'Line padding';
+const STRING_MATCH = 'String match';
+const STRING_MATCH_INDEX = 'String match index';
+const STRING_INSERT_MODE = 'String insert mode';
 module.exports = {
-    entry: capture,
+    entry: noteExport,
     settings: {
         name: 'AdvancedCapture',
         author: 'Nurdoidz',
         options: {
-            [CONFIG_PATH]: {
+            [NOTE_PATH]: {
                 type: 'text',
-                defaultValue: 'Scripts/QuickAdd/AdvancedCapture/Config.json',
-                placeholder: 'path/to/config.json'
+                defaultValue: '',
+                placeholder: 'path/to/note.md'
+            },
+            [CREATE_NOTE]: {
+                type: 'checkbox',
+                defaultValue: false
+            },
+            [TARGET]: {
+                type: 'dropdown',
+                defaultValue: 'File',
+                options: [
+                    'File',
+                    'Section',
+                    'Block',
+                    'Line',
+                    'String'
+                ]
+            },
+            [CUSTOM_VARIABLE]: {
+                type: 'text',
+                defaultValue: '',
+                placeholder: 'markdownExport'
+            },
+            [FILE_INSERT_MODE]: {
+                type: 'dropdown',
+                defaultValue: 'Append',
+                options: [
+                    'Append',
+                    'Prepend',
+                    'Replace'
+                ]
+            },
+            [FILE_PADDING]: {
+                type: 'text',
+                defaultValue: '0,1',
+                placeholder: '0,1'
+            },
+            [SECTION_MATCH]: {
+                type: 'text',
+                defaultValue: '',
+                placeholder: '# Header'
+            },
+            [SECTION_MATCH_INDEX]: {
+                type: 'text',
+                defaultValue: '',
+                placeholder: '1, 3-5'
+            },
+            [CREATE_SECTION]: {
+                type: 'text',
+                defaultValue: '',
+                placeholder: '# Header'
+            },
+            [SECTION_INSERT_MODE]: {
+                type: 'dropdown',
+                defaultValue: 'Bottom',
+                options: [
+                    'Top',
+                    'Bottom',
+                    'Prepend',
+                    'Append',
+                    'Replace'
+                ]
+            },
+            [SECTION_PADDING]: {
+                type: 'text',
+                defaultValue: '0,1',
+                placeholder: '0,1'
+            },
+            [BLOCK_TYPE]: {
+                type: 'dropdown',
+                defaultValue: 'Disabled',
+                options: [
+                    'Disabled',
+                    'Paragraph',
+                    'Unordered List',
+                    'Ordered List',
+                    'Task List',
+                    'Blockquote',
+                    'Code Block',
+                    'YAML'
+                ]
+            },
+            [BLOCK_MATCH]: {
+                type: 'text',
+                defaultValue: '',
+                placeholder: '```java'
+            },
+            [BLOCK_MATCH_INDEX]: {
+                type: 'text',
+                defaultValue: '',
+                placeholder: '1, 3-5'
+            },
+            [CREATE_CODE_BLOCK]: {
+                type: 'text',
+                defaultValue: '',
+                placeholder: '```java'
+            },
+            [BLOCK_INSERT_MODE]: {
+                type: 'dropdown',
+                defaultValue: 'Bottom',
+                options: [
+                    'Top',
+                    'Bottom',
+                    'Prepend',
+                    'Append',
+                    'Replace'
+                ]
+            },
+            [BLOCK_PADDING]: {
+                type: 'text',
+                defaultValue: '0,1',
+                placeholder: '0,1'
+            },
+            [LINE_MATCH]: {
+                type: 'text',
+                defaultValue: '',
+                placeholder: '#mytag'
+            },
+            [LINE_MATCH_INDEX]: {
+                type: 'text',
+                defaultValue: '',
+                placeholder: '1, 3-5'
+            },
+            [LINE_INSERT_MODE]: {
+                type: 'dropdown',
+                defaultValue: 'Append',
+                options: [
+                    'Prepend',
+                    'Append',
+                    'Replace'
+                ]
+            },
+            [LINE_PADDING]: {
+                type: 'text',
+                defaultValue: '0',
+                placeholder: '0'
+            },
+            [STRING_MATCH]: {
+                type: 'text',
+                defaultValue: '',
+                placeholder: '#mytag'
+            },
+            [STRING_MATCH_INDEX]: {
+                type: 'text',
+                defaultValue: '',
+                placeholder: '1, 3-5'
+            },
+            [STRING_INSERT_MODE]: {
+                type: 'dropdown',
+                defaultValue: 'Append',
+                options: [
+                    'Prepend',
+                    'Append',
+                    'Replace'
+                ]
             }
         }
     }
 };
 let Obsidian;
 let QuickAdd;
-async function capture(quickAdd, settings) {
-    info('Starting capture');
+async function noteExport(quickAdd, settings) {
+    info('Starting');
     Obsidian = quickAdd.app;
     QuickAdd = quickAdd.quickAddApi;
-    const config = await getConfig(new Path(replaceInString(quickAdd.variables, settings[CONFIG_PATH])));
-    quickAdd.variables = Object.assign(config.variables, quickAdd.variables);
-    const variables = quickAdd.variables;
-    variables.date = QuickAdd.date.now(config.dateExport?.csv?.format);
-    variables.time = QuickAdd.date.now(config.timeExport?.csv?.format);
-    const input = new Input();
-    input.add(variables.date, config.dateExport, 'Date');
-    input.add(variables.time, config.timeExport, 'Time');
-    const categoryName = await promptCategory(config.categories, variables);
-    if (!categoryName || !config.categories) {
-        info('Stopping');
-        return;
+    const VAR = quickAdd.variables;
+    if (!('markdownExport' in VAR)) {
+        throw new Error('Missing markdownExport in global variables');
     }
-    variables.categoryName = categoryName;
-    const category = config.categories[categoryName];
-    variables.categoryIcon = category.icon;
-    variables.categoryFullName = `${category.icon ? `${category.icon} ` : ''}${categoryName}`;
-    input.add(category?.icon ?? '', category.iconExport, 'Icon');
-    variables.todo = category.todo === true ? '- [ ] ' : ' ';
-    for (let i = 0; i < (category.fields?.length ?? 0); i++) {
-        input.addField(await promptField(category.fields[i], variables));
-    }
-    if (category.enableComment === true) {
-        input.addField(await promptComment(variables, category.commentExport));
-    }
-    variables.input = input;
-    variables.markdownExport = input.getMarkdownExport();
-    variables.csvKeyExport = input.getCsvKeyExport();
-    variables.csvValueExport = input.getCsvValueExport();
-    Object.assign(quickAdd.variables, variables);
-    info('Stored input in QuickAdd variables', { Variables: variables });
-    info('Stopping capture');
-}
-async function getConfig(path) {
-    info('Looking for config file', { Path: path });
-    if (!path.isFile('json'))
-        throw new Error('Path to config is not a json file');
-    let file = Obsidian.vault.getAbstractFileByPath(path);
+    const PATH = new Path(replaceInString(VAR, settings[NOTE_PATH]));
+    if (!PATH.isFile())
+        throw new Error(`${PATH} is not a file`);
+    let file = Obsidian.vault.getAbstractFileByPath(PATH);
     if (!file) {
-        warn('No config found', { Path: path });
-        info('Creating sample config', { Path: path });
-        await ensureFolderExists(path, Obsidian.vault);
-        const sample = new SampleConfig();
-        file = await Obsidian.vault.create(path.toString(), JSON.stringify(sample, null, 4));
-        if (!file)
-            throw new Error('Failed to create sample config');
-        info('Created sample config', { Path: path, Config: sample });
+        if (!settings[CREATE_NOTE])
+            throw new Error(`${PATH} does not exist`);
+        warn('Note not found; trying to create', { Path: PATH });
+        await ensureFolderExists(PATH, Obsidian.vault);
+        file = await Obsidian.vault.create(PATH.toString(), '');
+        info('Note file successfully created', { Path: PATH });
     }
-    info('Config found', { Path: path });
-    info('Reading config', { Path: path });
-    const content = await Obsidian.vault.read(file);
-    return new DefaultConfig(parseJsonToConfig(content));
-}
-async function promptCategory(cats, vars) {
-    if (!cats) {
-        warn('No categories found');
-        return undefined;
-    }
-    if (Object.keys(cats).length === 0) {
-        warn('No categories found');
-        return undefined;
-    }
-    const categories = { ...cats };
-    Object.keys(categories).forEach(cat => {
-        categories[cat].icon = replaceInString(vars, categories[cat].icon);
-    });
-    const display = Object.keys(categories);
-    const actual = [...display];
-    display.forEach((item, i, l) => {
-        if (categories[item].icon)
-            l[i] = `${categories[item].icon} ${item}`;
-    });
-    info('Prompting for category', { List: display });
-    return await QuickAdd.suggester(display, actual);
-}
-async function promptField(field, vars) {
-    field = Object.assign(new Fields(), field);
-    field = replaceRecursively(vars, field);
-    field.name = field.name.replace(/[,]/g, '');
-    let input;
-    let file;
-    let path;
-    info('Prompting for input', { Field: field });
-    switch (field.prompt) {
-        case 'wideInputPrompt':
-        case 'inputPrompt':
-            if (field.prompt === 'wideInputPrompt')
-                input = await QuickAdd.wideInputPrompt(field.name);
-            else
-                input = await QuickAdd.inputPrompt(field.name);
-            input = replaceInString(vars, input);
-            if (!input) {
-                if (field.required === true)
-                    throw new Error('No input received for required field');
-                input = '';
-            }
-            break;
-        case 'yesNoPrompt':
-            input = await QuickAdd.yesNoPrompt(field.name);
-            if (typeof input !== 'boolean') {
-                if (field.required === true)
-                    throw new Error('No input received for required field');
-                input = 'false';
-            }
-            input = input.toString();
-            break;
-        case 'suggester':
-            path = new Path(replaceInString(vars, field.listPath));
-            file = Obsidian.vault.getAbstractFileByPath(path);
-            if (!file) {
-                info('File for list not found; trying to create', { Path: path, Field: field.name });
-                await ensureFolderExists(path, Obsidian.vault);
-                file = await Obsidian.vault.create(path.toString(), '');
-                if (!file) {
-                    error('Failed to create file for list', { Path: path, Field: field.name });
-                    if (field.required === true) {
-                        throw new Error('Could not create file for list for required field');
-                    }
-                    input = '';
-                    break;
-                }
-                info('Created file for list', { Path: path, Field: field.name });
-            }
-            do {
-                let content = (await Obsidian.vault.read(file)).trim();
-                const display = [];
-                if (content.length > 0) {
-                    content.split('\n').forEach((line) => {
-                        display.push(replaceInString(vars, line).trim());
-                    });
-                }
-                content += '\n';
-                display.push('✨ Add');
-                const actual = display.slice(0, -1);
-                actual.push('!add');
-                input = await QuickAdd.suggester(display, actual);
-                input = replaceInString(vars, input);
-                if (!input) {
-                    if (field.required === true) {
-                        throw new Error('No input received for required field');
-                    }
-                    input = '';
-                }
-                if (input === '!add') {
-                    info('Prompting for new item in list', { Path: field.listPath, Field: field.name });
-                    let icon;
-                    if (field.hasIcons === true) {
-                        icon = await QuickAdd.inputPrompt(`Icon for new ${field.name}`);
-                        if (icon)
-                            icon = icon.replace(/\s/g, '');
-                        if (!icon)
-                            warn('Invalid icon', { Icon: icon });
-                    }
-                    if (field.hasIcons === !!icon) {
-                        const name = (await QuickAdd.inputPrompt(`Name for new ${field.name}`)).trim();
-                        if (name) {
-                            content += `${(icon ? `${icon} ` : '') + name}\n`;
-                            Obsidian.vault.modify(file, content);
-                            info('Added new item', { Path: field.listPath, Icon: icon, Name: name });
-                        }
-                        else
-                            warn('Invalid item name', { Name: name });
-                    }
-                }
-            } while (input === '!add');
-            if (!input) {
-                if (field.required === true)
-                    throw new Error('No input received for required field');
-                input = '';
-            }
-            break;
-        default:
-            error('Unsupported prompt type', { Prompt: field.prompt, Field: field.name });
-            throw new Error('Unsupported prompt type');
-    }
-    if (input)
-        info('Captured input for field', { Field: field.name, Input: input });
+    let contents = await Obsidian.vault.read(file);
+    if (!contents.endsWith('\n'))
+        contents += '\n';
     else
-        info('No input captured for field', { Field: field.name });
-    return new Field(input, field.export, field.name);
-}
-async function promptComment(vars, config) {
-    info('Prompting for comment');
-    return new Field(replaceInString(vars, await QuickAdd.inputPrompt('Comment')), config, 'Comment');
+        contents = `${VAR.markdownExport}\n${contents}`;
+    Obsidian.vault.modify(file, contents);
+    info('Note successfully updated with export', { Path: PATH, Line: VAR.markdownExport });
 }
 
 async function ensureFolderExists(path, vault) {
+    info('Inside ensureFolderExists');
     if (!path.hasFolder())
         return;
     if (!vault.getAbstractFileByPath(path.getFolder())) {

@@ -28,7 +28,7 @@ module.exports = {
 
 async function csv(quickAdd: any, settings: any): Promise<void> {
 
-    info('Starting');
+    info('Starting CSV export');
 
     const Obsidian = quickAdd.app;
     const variables: { csvKeyExport: string, csvValueExport: string } = quickAdd.variables;
@@ -45,7 +45,7 @@ async function csv(quickAdd: any, settings: any): Promise<void> {
         warn('CSV file not found; trying to create', { Path: path });
         await ensureFolderExists(path, Obsidian.vault);
         file = await Obsidian.vault.create(
-            path, `${variables.csvKeyExport}\n${variables.csvValueExport}\n`
+            path.toString(), `${variables.csvKeyExport}\n${variables.csvValueExport}\n`
         );
         info('CSV file successfully created with export',
             { Path: path, Header: variables.csvKeyExport, Row: variables.csvValueExport });
@@ -59,5 +59,5 @@ async function csv(quickAdd: any, settings: any): Promise<void> {
             { Path: path, Row: variables.csvValueExport });
     }
 
-    info('Stopping');
+    info('Stopping CSV export');
 }
