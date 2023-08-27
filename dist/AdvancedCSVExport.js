@@ -42,7 +42,6 @@ async function csv(quickAdd, settings) {
 }
 
 async function ensureFolderExists(path, vault) {
-    info('Inside ensureFolderExists');
     if (!path.hasFolder())
         return;
     if (!vault.getAbstractFileByPath(path.getFolder())) {

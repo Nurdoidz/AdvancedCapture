@@ -211,17 +211,69 @@ async function noteExport(quickAdd, settings) {
         file = await Obsidian.vault.create(PATH.toString(), '');
         info('Note file successfully created', { Path: PATH });
     }
-    let contents = await Obsidian.vault.read(file);
-    if (!contents.endsWith('\n'))
-        contents += '\n';
-    else
-        contents = `${VAR.markdownExport}\n${contents}`;
-    Obsidian.vault.modify(file, contents);
+    const lines = (await Obsidian.vault.read(file)).split('\n');
+    const customVariable = replaceInString(VAR, settings[CUSTOM_VARIABLE]);
+    const content = customVariable.length > 0 ? customVariable : VAR.markdownExport;
+    const reMatchNumCommaNum = /^(\d+)(?:,(\d+))?$/;
+    if (settings[TARGET] === 'File') {
+        switch (settings[FILE_INSERT_MODE]) {
+            case 'Append':
+                lines.push(content);
+                break;
+            case 'Prepend':
+                lines.unshift(content);
+                break;
+            case 'Replace':
+                lines.length = 0;
+                lines.push(content);
+                break;
+        }
+    }
+    if (settings[FILE_PADDING] === '')
+        pad(lines, 0, 1);
+    else if (!reMatchNumCommaNum.test(settings[FILE_PADDING])) {
+        throw new Error(`${settings[FILE_PADDING]} is not valid syntax for file padding`);
+    }
+    else {
+        pad(lines, settings[FILE_PADDING].match(reMatchNumCommaNum)[1], settings[FILE_PADDING].match(reMatchNumCommaNum)[2]);
+    }
+    Obsidian.vault.modify(file, lines.join('\n'));
     info('Note successfully updated with export', { Path: PATH, Line: VAR.markdownExport });
+}
+function pad(arr, top, bottom) {
+    if (arr.length === 0)
+        throw new Error('Cannot pad an empty array');
+    if (!(top >= 0))
+        throw new Error('Top padding must be >= 0');
+    if (bottom === undefined)
+        bottom = top;
+    else if (!(bottom >= 0))
+        throw new Error('Bottom padding must be >= 0');
+    let start = 0;
+    let end = 0;
+    for (let i = 0; i < arr.length; i++) {
+        if (arr[i].length > 0) {
+            start = i;
+            break;
+        }
+    }
+    for (let i = start; i < arr.length; i++) {
+        if (arr[i].length > 0) {
+            end = i;
+            break;
+        }
+    }
+    const result = arr.slice(start, end + 1);
+    for (let i = 0; i < top; i++) {
+        result.unshift('');
+    }
+    for (let i = 0; i < bottom; i++) {
+        result.push('');
+    }
+    return result;
 }
 
 async function ensureFolderExists(path, vault) {
-    info('Inside ensureFolderExists');
     if (!path.hasFolder())
         return;
     if (!vault.getAbstractFileByPath(path.getFolder())) {

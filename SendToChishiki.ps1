@@ -12,3 +12,10 @@ try {
 catch {
     Write-Host -ForegroundColor Red $_.ErrorDetails.Message
 }
+try {
+    Copy-Item -Path .\dist\AdvancedNoteExport.js $env:Ndz\Chishiki\Scripts\QuickAdd\AdvancedCapture\AdvancedNoteExport.js -Force
+    Write-Host -ForegroundColor Green 'Copied AdvancedNoteExport.js to Chishiki'
+}
+catch {
+    Write-Host -ForegroundColor Red $_.ErrorDetails.Message
+}
