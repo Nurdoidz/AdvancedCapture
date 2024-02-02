@@ -152,6 +152,7 @@ interface Category {
     iconExport?: ConfigExportable;
     enableComment?: boolean;
     commentExport?: ConfigExportable;
+    commentProcess?: Processable;
     todo?: boolean;
     fields?: Fieldable[];
 }
@@ -168,20 +169,38 @@ export class Categor implements Category {
 export interface Fieldable {
 
     name: string;
+    variable: string;
     prompt?: 'inputPrompt' | 'suggester' | 'wideInputPrompt' | 'yesNoPrompt';
     listPath?: string;
     required?: boolean;
     hasIcons?: boolean;
     export?: ConfigExportable;
+    process?: Processable;
 }
 
 export class Fields implements Fieldable {
 
     name = '';
+    variable = '';
     listPath = '';
     required = false;
     hasIcons = false;
     export = new DefaultExportConfig();
+    process = new DefaultProcessConfig();
+}
+
+export interface Processable {
+
+    csv: string;
+    print: string;
+    input: string;
+}
+
+export class DefaultProcessConfig implements Processable {
+
+    csv = '';
+    print = '';
+    input = '';
 }
 
 export interface QaVariables {
@@ -193,10 +212,10 @@ export class Input {
 
     private fields: Field[] = [];
 
-    add(input: string, config: ConfigExportable | undefined, key: string) {
+    add(input: string, config: ConfigExportable | undefined, key: string, process?: Processable) {
 
         if (!config) config = new DefaultExportConfig();
-        if (input) this.fields.push(new Field(input, config, key));
+        if (input) this.fields.push(new Field(input, config, key, process));
     }
 
     addField(field?: Field) {
@@ -219,7 +238,7 @@ export class Input {
     getCsvKeyExport(): string {
 
         return this.fields.map(field => {
-            if (field.shouldIncludeCsv()) return field.getFieldKey().replace(/,/, '');
+            if (field.shouldIncludeCsv()) return field.getFieldKey().replace(/[,]/g, '');
             return null;
         }).filter(key => key).join(',');
     }
@@ -238,12 +257,14 @@ export class Field implements Printable, Exportable {
     protected input = '';
     private key = '';
     protected config: ConfigExportable = new DefaultExportConfig();
+    protected process: Processable = new DefaultProcessConfig();
 
-    constructor(input: string, config: ConfigExportable | undefined, key: string) {
+    constructor(input: string, config: ConfigExportable | undefined, key: string, process: Processable | undefined) {
 
         this.input = input;
         this.key = key;
         if (config) Object.assign(this.config, config);
+        if (process) Object.assign(this.process, process);
     }
 
     getSeparator(): string {
@@ -254,6 +275,14 @@ export class Field implements Printable, Exportable {
     getPrintString(): string {
 
         let result = this.input;
+        if (this.process.input) {
+            const lambda = eval(this.process.input);
+            result = lambda(result);
+        }
+        if (this.process.print) {
+            const lambda = eval(this.process.print);
+            result = lambda(result);
+        }
         result = `${this.config.print?.prefix ?? ''}${result}${this.config.print?.suffix ?? ''}`;
         if (this.config.print?.internalLink) result = `[[${result}]]`;
         else if (this.config.print?.externalLink) {
@@ -269,8 +298,17 @@ export class Field implements Printable, Exportable {
 
     getFieldValue(): string {
 
-        const result = `${this.config.csv?.valuePrefix
-            ?? ''}${this.input}${this.config.csv?.valueSuffix ?? ''}`;
+        let result = this.input;
+        if (this.process.input) {
+            const lambda = eval(this.process.input);
+            result = lambda(result);
+        }
+        if (this.process.csv) {
+            const lambda = eval(this.process.csv);
+            result = lambda(result);
+        }
+        result = `${this.config.csv?.valuePrefix
+            ?? ''}${result}${this.config.csv?.valueSuffix ?? ''}`;
         if (shouldQuote(this.input)) return `"${result}"`;
         return result;
     }

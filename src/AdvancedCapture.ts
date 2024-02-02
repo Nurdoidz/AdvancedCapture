@@ -8,7 +8,7 @@
 
 import { replaceInString, Path, Input, info, Config, ensureFolderExists, warn,
     SampleConfig, parseJsonToConfig, Categories, QaVariables, Field, Fields,
-    replaceRecursively, error, DefaultConfig, Fieldable, ConfigExportable } from 'Common';
+    replaceRecursively, error, DefaultConfig, Fieldable, ConfigExportable, Processable } from 'Common';
 
 const CONFIG_PATH = 'Path to configuration file';
 
@@ -26,6 +26,7 @@ module.exports = {
             }
         }
     }
+    // TODO: Add an opt-in setting for enabling input processing (eval).
 };
 
 let Obsidian: any;
@@ -65,7 +66,7 @@ async function capture(quickAdd: any, settings: any): Promise<void> {
         input.addField(await promptField(category.fields![i], variables));
     }
     if (category.enableComment === true) {
-        input.addField(await promptComment(variables, category.commentExport));
+        input.addField(await promptComment(variables, category.commentExport, category.commentProcess));
     }
 
     variables.input = input;
@@ -111,6 +112,9 @@ async function promptCategory(cats: Categories | undefined, vars: QaVariables): 
     if (Object.keys(cats).length === 0) {
         warn('No categories found');
         return undefined;
+    }
+    if (Object.keys(cats).length === 1) {
+        return Object.keys(cats)[0];
     }
     const categories = { ...cats };
 
@@ -230,13 +234,15 @@ async function promptField(field: Fieldable, vars: QaVariables): Promise<Field |
     if (input) info('Captured input for field', { Field: field.name, Input: input });
     else info('No input captured for field', { Field: field.name });
 
-    return new Field(input, field.export, field.name);
+    if (field.variable.length > 0) vars[field.variable] = input;
+
+    return new Field(input, field.export, field.name, field.process);
 }
 
 async function promptComment(
-    vars: QaVariables, config: ConfigExportable | undefined): Promise<Field> {
+    vars: QaVariables, config: ConfigExportable | undefined, process: Processable | undefined): Promise<Field> {
 
     info('Prompting for comment');
     return new Field(
-        replaceInString(vars, await QuickAdd.inputPrompt('Comment')), config, 'Comment');
+        replaceInString(vars, await QuickAdd.inputPrompt('Comment')), config, 'Comment', process);
 }

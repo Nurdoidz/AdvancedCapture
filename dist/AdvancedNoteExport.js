@@ -404,20 +404,28 @@ async function ensureFolderExists(path, vault) {
 }class Fields {
     constructor() {
         this.name = '';
+        this.variable = '';
         this.listPath = '';
         this.required = false;
         this.hasIcons = false;
         this.export = new DefaultExportConfig();
+        this.process = new DefaultProcessConfig();
+    }
+}class DefaultProcessConfig {
+    constructor() {
+        this.csv = '';
+        this.print = '';
+        this.input = '';
     }
 }class Input {
     constructor() {
         this.fields = [];
     }
-    add(input, config, key) {
+    add(input, config, key, process) {
         if (!config)
             config = new DefaultExportConfig();
         if (input)
-            this.fields.push(new Field(input, config, key));
+            this.fields.push(new Field(input, config, key, process));
     }
     addField(field) {
         if (field)
@@ -438,7 +446,7 @@ async function ensureFolderExists(path, vault) {
     getCsvKeyExport() {
         return this.fields.map(field => {
             if (field.shouldIncludeCsv())
-                return field.getFieldKey().replace(/,/, '');
+                return field.getFieldKey().replace(/[,]/g, '');
             return null;
         }).filter(key => key).join(',');
     }
@@ -450,20 +458,31 @@ async function ensureFolderExists(path, vault) {
         }).filter(key => key).join(',');
     }
 }class Field {
-    constructor(input, config, key) {
+    constructor(input, config, key, process) {
         this.input = '';
         this.key = '';
         this.config = new DefaultExportConfig();
+        this.process = new DefaultProcessConfig();
         this.input = input;
         this.key = key;
         if (config)
             Object.assign(this.config, config);
+        if (process)
+            Object.assign(this.process, process);
     }
     getSeparator() {
         return this.config.print?.separator ?? ' - ';
     }
     getPrintString() {
         let result = this.input;
+        if (this.process.input) {
+            const lambda = eval(this.process.input);
+            result = lambda(result);
+        }
+        if (this.process.print) {
+            const lambda = eval(this.process.print);
+            result = lambda(result);
+        }
         result = `${this.config.print?.prefix ?? ''}${result}${this.config.print?.suffix ?? ''}`;
         if (this.config.print?.internalLink)
             result = `[[${result}]]`;
@@ -476,8 +495,17 @@ async function ensureFolderExists(path, vault) {
         return `${this.config.csv?.keyPrefix ?? ''}${this.key}${this.config.csv?.keySuffix ?? ''}`;
     }
     getFieldValue() {
-        const result = `${this.config.csv?.valuePrefix
-            ?? ''}${this.input}${this.config.csv?.valueSuffix ?? ''}`;
+        let result = this.input;
+        if (this.process.input) {
+            const lambda = eval(this.process.input);
+            result = lambda(result);
+        }
+        if (this.process.csv) {
+            const lambda = eval(this.process.csv);
+            result = lambda(result);
+        }
+        result = `${this.config.csv?.valuePrefix
+            ?? ''}${result}${this.config.csv?.valueSuffix ?? ''}`;
         if (shouldQuote(this.input))
             return `"${result}"`;
         return result;
