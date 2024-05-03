@@ -424,8 +424,7 @@ async function ensureFolderExists(path, vault) {
     add(input, config, key, process) {
         if (!config)
             config = new DefaultExportConfig();
-        if (input)
-            this.fields.push(new Field(input, config, key, process));
+        this.fields.push(new Field(input, config, key, process));
     }
     addField(field) {
         if (field)

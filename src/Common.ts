@@ -215,7 +215,7 @@ export class Input {
     add(input: string, config: ConfigExportable | undefined, key: string, process?: Processable) {
 
         if (!config) config = new DefaultExportConfig();
-        if (input) this.fields.push(new Field(input, config, key, process));
+        this.fields.push(new Field(input, config, key, process));
     }
 
     addField(field?: Field) {
